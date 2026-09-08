@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, PlayfairDisplay_700Bold, PlayfairDisplay_600SemiBold, PlayfairDisplay_700Bold_Italic } from '@expo-google-fonts/playfair-display';
 import { DMMono_500Medium } from '@expo-google-fonts/dm-mono';
@@ -16,7 +16,7 @@ import FavoritosScreen from './screens/favoritosScreen.js';
 import LugarHistoricoScreen from './screens/lugarHistoricoScreen.js';
 import ComparacionScreen from './screens/comparacionScreen.js';
 import HistoriaLugarScreen from './screens/historiaLugarScreen.js';
-import { C } from './theme.js';
+import { C } from './theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,8 +38,11 @@ function TabsPrincipales() {
           paddingBottom: 10,
         },
         tabBarLabelStyle: { fontSize: 10, fontWeight: '500' },
-        tabBarIcon: ({ color, size }) => {
-          const icons = { Inicio: 'map', Buscar: 'search', Favoritos: 'bookmark' };
+        tabBarIcon: ({ color, size, focused }) => {
+          if (route.name === 'Favoritos') {
+            return <Ionicons name={focused ? 'heart' : 'heart-outline'} size={size ?? 20} color={color} />;
+          }
+          const icons = { Inicio: 'map', Buscar: 'search' };
           return <Feather name={icons[route.name]} size={size ?? 20} color={color} />;
         },
       })}

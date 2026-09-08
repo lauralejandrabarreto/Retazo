@@ -18,7 +18,7 @@ export default function FavoritosScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Guardados</Text>
+        <Text style={styles.title}>Favoritos</Text>
         <Text style={styles.subtitle}>{PLACES.length} lugares en tu colección</Text>
       </View>
 
