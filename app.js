@@ -1,11 +1,8 @@
 import 'react-native-gesture-handler';
-import React, { useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, PlayfairDisplay_700Bold, PlayfairDisplay_600SemiBold, PlayfairDisplay_700Bold_Italic } from '@expo-google-fonts/playfair-display';
 import { DMMono_500Medium } from '@expo-google-fonts/dm-mono';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
@@ -17,8 +14,6 @@ import LugarHistoricoScreen from './screens/lugarHistoricoScreen.js';
 import ComparacionScreen from './screens/comparacionScreen.js';
 import HistoriaLugarScreen from './screens/historiaLugarScreen.js';
 import { C } from './theme';
-
-SplashScreen.preventAutoHideAsync();
 
 const tab = createBottomTabNavigator();
 const stack = createNativeStackNavigator();
@@ -66,22 +61,16 @@ export default function AppNavigator() {
     Inter_700Bold,
   });
 
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) await SplashScreen.hideAsync();
-  }, [fontsLoaded]);
-
   if (!fontsLoaded) return null;
 
   return (
-    <SafeAreaProvider onLayout={onLayoutRootView}>
-      <NavigationContainer>
-        <stack.Navigator screenOptions={{ headerShown: false }}>
-          <stack.Screen name="TabsPrincipales" component={TabsPrincipales} />
-          <stack.Screen name="LugarHistorico" component={LugarHistoricoScreen} />
-          <stack.Screen name="Comparacion" component={ComparacionScreen} />
-          <stack.Screen name="HistoriaLugar" component={HistoriaLugarScreen} />
-        </stack.Navigator>
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <NavigationContainer>
+      <stack.Navigator screenOptions={{ headerShown: false }}>
+        <stack.Screen name="TabsPrincipales" component={TabsPrincipales} />
+        <stack.Screen name="LugarHistorico" component={LugarHistoricoScreen} />
+        <stack.Screen name="Comparacion" component={ComparacionScreen} />
+        <stack.Screen name="HistoriaLugar" component={HistoriaLugarScreen} />
+      </stack.Navigator>
+    </NavigationContainer>
   );
 }
