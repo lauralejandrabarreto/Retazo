@@ -1,56 +1,18 @@
 import 'react-native-gesture-handler';
+import React from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts, PlayfairDisplay_700Bold, PlayfairDisplay_600SemiBold, PlayfairDisplay_700Bold_Italic } from '@expo-google-fonts/playfair-display';
 import { DMMono_500Medium } from '@expo-google-fonts/dm-mono';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 
-import InicioScreen from './screens/inicioScreen.js';
-import BuscarScreen from './screens/buscarScreen.js';
-import FavoritosScreen from './screens/favoritosScreen.js';
-import LugarHistoricoScreen from './screens/lugarHistoricoScreen.js';
-import ComparacionScreen from './screens/comparacionScreen.js';
-import HistoriaLugarScreen from './screens/historiaLugarScreen.js';
+import AppNavigator from './navigation/AppNavigator';
+import { FavoritesProvider } from './context/FavoritesContext';
 import { C } from './theme';
 
-const tab = createBottomTabNavigator();
-const stack = createNativeStackNavigator();
-
-function TabsPrincipales() {
-  return (
-    <tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: C.amber,
-        tabBarInactiveTintColor: C.brown,
-        tabBarStyle: {
-          backgroundColor: C.cream,
-          borderTopColor: C.border,
-          height: 64,
-          paddingTop: 8,
-          paddingBottom: 10,
-        },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '500' },
-        tabBarIcon: ({ color, size, focused }) => {
-          if (route.name === 'Favoritos') {
-            return <Ionicons name={focused ? 'heart' : 'heart-outline'} size={size ?? 20} color={color} />;
-          }
-          const icons = { Inicio: 'map', Buscar: 'search' };
-          return <Feather name={icons[route.name]} size={size ?? 20} color={color} />;
-        },
-      })}
-    >
-      <tab.Screen name="Inicio" component={InicioScreen} />
-      <tab.Screen name="Buscar" component={BuscarScreen} />
-      <tab.Screen name="Favoritos" component={FavoritosScreen} />
-    </tab.Navigator>
-  );
-}
-
-export default function AppNavigator() {
-  const [fontsLoaded] = useFonts({
+export default function App() {
+  const [fontsLoaded, fontError] = useFonts({
     PlayfairDisplay_700Bold,
     PlayfairDisplay_600SemiBold,
     PlayfairDisplay_700Bold_Italic,
@@ -61,16 +23,27 @@ export default function AppNavigator() {
     Inter_700Bold,
   });
 
-  if (!fontsLoaded) return null;
+  // Mientras cargan las fuentes se muestra un indicador. Si fallan, la app
+  // continúa con las fuentes del sistema en lugar de quedarse en blanco.
+  if (!fontsLoaded && !fontError) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator color={C.amber} />
+      </View>
+    );
+  }
 
   return (
-    <NavigationContainer>
-      <stack.Navigator screenOptions={{ headerShown: false }}>
-        <stack.Screen name="TabsPrincipales" component={TabsPrincipales} />
-        <stack.Screen name="LugarHistorico" component={LugarHistoricoScreen} />
-        <stack.Screen name="Comparacion" component={ComparacionScreen} />
-        <stack.Screen name="HistoriaLugar" component={HistoriaLugarScreen} />
-      </stack.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <FavoritesProvider>
+        <NavigationContainer>
+          <AppNavigator />
+        </NavigationContainer>
+      </FavoritesProvider>
+    </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.parchment },
+});
