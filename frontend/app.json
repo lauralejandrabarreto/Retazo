@@ -23,7 +23,9 @@
     "plugins": [
       "expo-status-bar",
       "expo-font",
-      "expo-splash-screen"
+      "expo-splash-screen",
+      ["expo-location", { "locationWhenInUsePermission": "Retazo usa tu ubicación para centrar el mapa al registrar un lugar." }],
+      ["expo-image-picker", { "photosPermission": "Retazo necesita acceder a tus fotos para adjuntar imágenes del lugar." }]
     ]
   }
 }
