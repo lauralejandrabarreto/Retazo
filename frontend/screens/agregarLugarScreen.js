@@ -1,24 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  Alert,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
+  View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Image,
+  Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import * as ImagePicker from 'expo-image-picker';
 
 import LocationPickerMap from '../components/LocationPickerMap';
-import { C, F, SPACING } from '../theme';
+import { F, SPACING } from '../theme';
 import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
+import { createPlace } from '../services/placesService';
 
 const COLORS = {
   parchment: '#F4EDDF',
@@ -28,9 +20,9 @@ const COLORS = {
   border: '#E8DCC7',
   gold: '#AC7933',
   map: '#E6DAC1',
+  error: '#A33B2E',
 };
 
-// Se usa cuando no se puede obtener la ubicación del dispositivo (Tegucigalpa).
 const INITIAL_REGION = {
   latitude: 14.0723,
   longitude: -87.1921,
@@ -38,21 +30,33 @@ const INITIAL_REGION = {
   longitudeDelta: 0.01,
 };
 
+// Mismos valores que acepta el backend (LugarHistoricoService.ETIQUETAS_SIGLO).
 const SIGLOS = [
-  'Siglo XV',
-  'Siglo XVI',
-  'Siglo XVII',
-  'Siglo XVIII',
-  'Siglo XIX',
-  'Siglo XX',
-  'Siglo XXI',
-  'Anterior al siglo XV',
+  { value: 'prehispanico', label: 'Prehispánico' },
+  { value: 'XVI', label: 'Siglo XVI' },
+  { value: 'XVII', label: 'Siglo XVII' },
+  { value: 'XVIII', label: 'Siglo XVIII' },
+  { value: 'XIX', label: 'Siglo XIX' },
+  { value: 'XX', label: 'Siglo XX' },
 ];
 
+const esUrlHttp = (texto) => /^https?:\/\/\S+$/i.test(texto.trim());
+
+// "Plaza de Bolívar" + "Bogotá" -> "plaza-de-bolivar-bogota"
+function crearSlug(...partes) {
+  return partes
+    .join(' ')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80)
+    .replace(/-+$/g, '');
+}
+
 // ---------------------------------------------------------------------------
-// Componentes visuales. Están FUERA de AgregarLugarScreen a propósito: si se
-// definen dentro, React crea un componente nuevo en cada render y los
-// TextInput se desmontan (se pierde el foco) con cada letra escrita.
+// Componentes visuales (fuera de la pantalla para no perder el foco al escribir).
 // ---------------------------------------------------------------------------
 
 function Seccion({ titulo, descripcion, children }) {
@@ -65,7 +69,7 @@ function Seccion({ titulo, descripcion, children }) {
   );
 }
 
-function Campo({ label, value, onChangeText, placeholder, multiline = false, height, keyboardType }) {
+function Campo({ label, value, onChangeText, placeholder, multiline = false, height, keyboardType, url = false }) {
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
@@ -75,7 +79,9 @@ function Campo({ label, value, onChangeText, placeholder, multiline = false, hei
         placeholder={placeholder}
         placeholderTextColor={COLORS.muted}
         multiline={multiline}
-        keyboardType={keyboardType}
+        keyboardType={url ? 'url' : keyboardType}
+        autoCapitalize={url ? 'none' : undefined}
+        autoCorrect={url ? false : undefined}
         textAlignVertical={multiline ? 'top' : 'center'}
         style={[styles.input, multiline && styles.multilineInput, height ? { height } : null]}
         accessibilityLabel={label}
@@ -84,50 +90,88 @@ function Campo({ label, value, onChangeText, placeholder, multiline = false, hei
   );
 }
 
+// Dropdown: al tocar se despliega la lista y al elegir una opción se cierra.
 function SelectorSiglo({ siglo, onSelect }) {
+  const [abierto, setAbierto] = useState(false);
+  const actual = SIGLOS.find((s) => s.value === siglo);
+
   return (
     <View style={styles.field}>
       <Text style={styles.label}>Siglo al que pertenece</Text>
 
-      <View style={styles.selectContainer}>
-        <Text style={styles.selectValue}>{siglo || 'Selecciona el siglo'}</Text>
-        <Text style={styles.selectArrow}>⌄</Text>
-      </View>
+      <TouchableOpacity
+        style={[styles.selectContainer, abierto && styles.selectContainerOpen]}
+        onPress={() => setAbierto((v) => !v)}
+        accessibilityRole="button"
+        accessibilityLabel="Siglo al que pertenece"
+        accessibilityState={{ expanded: abierto }}
+      >
+        <Text style={[styles.selectValue, actual && styles.selectValueActive]}>
+          {actual?.label ?? 'Selecciona el siglo'}
+        </Text>
+        <Feather name={abierto ? 'chevron-up' : 'chevron-down'} size={18} color={COLORS.muted} />
+      </TouchableOpacity>
 
-      <View style={styles.centuries}>
-        {SIGLOS.map((item) => (
-          <TouchableOpacity
-            key={item}
-            style={[styles.centuryOption, siglo === item && styles.centurySelected]}
-            onPress={() => onSelect(item)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: siglo === item }}
-          >
-            <Text style={[styles.centuryText, siglo === item && styles.centurySelectedText]}>{item}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {abierto && (
+        <View style={styles.dropdownList}>
+          {SIGLOS.map((item, i) => {
+            const activo = item.value === siglo;
+            return (
+              <TouchableOpacity
+                key={item.value}
+                style={[styles.dropdownItem, i > 0 && styles.dropdownItemBorder, activo && styles.dropdownItemActive]}
+                onPress={() => {
+                  onSelect(item.value);
+                  setAbierto(false);
+                }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: activo }}
+              >
+                <Text style={[styles.dropdownText, activo && styles.dropdownTextActive]}>{item.label}</Text>
+                {activo && <Feather name="check" size={14} color={COLORS.gold} />}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }
 
-function TarjetaFotografia({ foto, puedeEliminar, onPickPhoto, onChangeYear, onRemove }) {
+// Vista previa de la imagen a partir de la URL pegada.
+function VistaPrevia({ url, style }) {
+  const [fallo, setFallo] = useState(false);
+  useEffect(() => setFallo(false), [url]);
+
+  if (!esUrlHttp(url) || fallo) {
+    return (
+      <View style={[styles.previewEmpty, style]}>
+        <Feather name={fallo ? 'alert-triangle' : 'image'} size={18} color="#C8B99E" />
+      </View>
+    );
+  }
+  return <Image source={{ uri: url.trim() }} style={style} resizeMode="cover" onError={() => setFallo(true)} />;
+}
+
+function TarjetaFotografia({ foto, puedeEliminar, onChangeUrl, onChangeYear, onRemove }) {
   return (
     <View style={styles.photoCard}>
       <View style={styles.photoRow}>
-        <TouchableOpacity style={styles.photoPreview} onPress={onPickPhoto} accessibilityRole="button" accessibilityLabel="Elegir fotografía">
-          {foto.uri ? (
-            <Image source={{ uri: foto.uri }} style={styles.photoImage} />
-          ) : (
-            <Text style={styles.photoPlaceholder}>＋</Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.uploadButton} onPress={onPickPhoto} accessibilityRole="button">
-          <Text style={styles.uploadText}>⇧ Subir fotografía</Text>
-          <Text style={styles.fileTypes}>JPG o PNG</Text>
-        </TouchableOpacity>
-
+        <VistaPrevia url={foto.url} style={styles.photoPreview} />
+        <View style={styles.uploadButton}>
+          <Text style={styles.label}>URL de la fotografía</Text>
+          <TextInput
+            value={foto.url}
+            onChangeText={onChangeUrl}
+            placeholder="https://..."
+            placeholderTextColor={COLORS.muted}
+            keyboardType="url"
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={styles.input}
+            accessibilityLabel="URL de la fotografía histórica"
+          />
+        </View>
         {puedeEliminar && (
           <TouchableOpacity onPress={onRemove} hitSlop={10} accessibilityRole="button" accessibilityLabel="Quitar fotografía">
             <Text style={styles.removePhoto}>×</Text>
@@ -152,11 +196,15 @@ function TarjetaFotografia({ foto, puedeEliminar, onPickPhoto, onChangeYear, onR
 
 // ---------------------------------------------------------------------------
 
+const nuevaFoto = () => ({ id: Date.now() + Math.random(), url: '', anio: '' });
+
 export default function AgregarLugarScreen() {
   // Información del lugar
   const [nombre, setNombre] = useState('');
   const [siglo, setSiglo] = useState('');
-  const [direccion, setDireccion] = useState('');
+  const [sector, setSector] = useState('');
+  const [ciudad, setCiudad] = useState('');
+  const [pais, setPais] = useState('');
   const [descripcion, setDescripcion] = useState('');
 
   // Historia del lugar
@@ -164,26 +212,25 @@ export default function AgregarLugarScreen() {
   const [transformaciones, setTransformaciones] = useState('');
   const [significado, setSignificado] = useState('');
 
-  // Fotografías
-  const [fotografias, setFotografias] = useState([{ id: 1, uri: null, anio: '' }]);
-  const [fotografiaActual, setFotografiaActual] = useState(null);
+  // Imágenes (URLs)
+  const [fotografias, setFotografias] = useState([nuevaFoto()]);
+  const [urlActual, setUrlActual] = useState('');
 
   // Ubicación
   const [region, setRegion] = useState(null);
   const [coordenadas, setCoordenadas] = useState(null);
   const [cargandoUbicacion, setCargandoUbicacion] = useState(true);
 
+  const [enviando, setEnviando] = useState(false);
+
   useEffect(() => {
     obtenerUbicacion();
   }, []);
 
-  // Obtener ubicación actual del dispositivo
   async function obtenerUbicacion() {
     try {
       setCargandoUbicacion(true);
-
       const { status } = await Location.requestForegroundPermissionsAsync();
-
       if (status !== 'granted') {
         Alert.alert(
           'Permiso de ubicación',
@@ -191,99 +238,104 @@ export default function AgregarLugarScreen() {
         );
         return;
       }
-
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      const nuevaUbicacion = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      };
-
-      setCoordenadas(nuevaUbicacion);
-      setRegion({ ...nuevaUbicacion, latitudeDelta: 0.01, longitudeDelta: 0.01 });
+      const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const nueva = { latitude: location.coords.latitude, longitude: location.coords.longitude };
+      setCoordenadas(nueva);
+      setRegion({ ...nueva, latitudeDelta: 0.01, longitudeDelta: 0.01 });
     } catch (error) {
       console.error('Error obteniendo ubicación:', error);
-      Alert.alert('Ubicación no disponible', 'No pudimos obtener tu ubicación. Intenta nuevamente.');
+      Alert.alert('Ubicación no disponible', 'No pudimos obtener tu ubicación. Selecciónala en el mapa.');
     } finally {
       setCargandoUbicacion(false);
     }
   }
 
-  // Seleccionar una fotografía
-  async function seleccionarFotografia() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const actualizarFoto = (id, cambios) =>
+    setFotografias((fs) => fs.map((f) => (f.id === id ? { ...f, ...cambios } : f)));
 
-    if (!permission.granted) {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería para seleccionar fotografías.');
-      return null;
+  function limpiarFormulario() {
+    setNombre(''); setSiglo(''); setSector(''); setCiudad(''); setPais(''); setDescripcion('');
+    setOrigen(''); setTransformaciones(''); setSignificado('');
+    setFotografias([nuevaFoto()]); setUrlActual('');
+  }
+
+  // Devuelve la lista de errores de validación (misma lógica que el backend).
+  function validar() {
+    const errores = [];
+    if (!nombre.trim()) errores.push('El nombre del lugar es obligatorio.');
+    if (!siglo) errores.push('Selecciona el siglo.');
+    if (!sector.trim()) errores.push('El sector o barrio es obligatorio.');
+    if (!ciudad.trim()) errores.push('La ciudad es obligatoria.');
+    if (!pais.trim()) errores.push('El país es obligatorio.');
+    if (!descripcion.trim()) errores.push('La descripción breve es obligatoria.');
+    if (!coordenadas) errores.push('Selecciona la ubicación en el mapa.');
+    if (nombre.trim() && ciudad.trim() && !crearSlug(nombre, ciudad)) {
+      errores.push('El nombre y la ciudad deben contener letras o números.');
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: false,
-      quality: 0.8,
+    if (urlActual.trim() && !esUrlHttp(urlActual)) {
+      errores.push('La URL de la fotografía actual debe empezar con http:// o https://.');
+    }
+    fotografias.forEach((f, i) => {
+      const url = f.url.trim();
+      const anio = f.anio.trim();
+      if (!url && !anio) return; // tarjeta vacía: se ignora
+      if (url && !esUrlHttp(url)) errores.push(`La URL de la fotografía histórica ${i + 1} no es válida.`);
+      if (!anio) errores.push(`La fotografía histórica ${i + 1} necesita un año.`);
     });
-
-    if (result.canceled || !result.assets?.length) {
-      return null;
-    }
-
-    return result.assets[0].uri;
+    return errores;
   }
 
-  async function agregarFotografiaHistorica(id) {
-    const uri = await seleccionarFotografia();
-    if (!uri) return;
+  async function registrarLugar() {
+    if (enviando) return;
 
-    setFotografias((actuales) => actuales.map((foto) => (foto.id === id ? { ...foto, uri } : foto)));
-  }
-
-  async function agregarFotografiaActual() {
-    const uri = await seleccionarFotografia();
-    if (uri) setFotografiaActual(uri);
-  }
-
-  function actualizarAnio(id, anio) {
-    setFotografias((actuales) => actuales.map((foto) => (foto.id === id ? { ...foto, anio } : foto)));
-  }
-
-  function agregarCampoFotografia() {
-    setFotografias((actuales) => [...actuales, { id: Date.now(), uri: null, anio: '' }]);
-  }
-
-  function eliminarFotografia(id) {
-    setFotografias((actuales) => actuales.filter((foto) => foto.id !== id));
-  }
-
-  // En esta etapa valida el formulario.
-  // La conexión con el endpoint se puede agregar posteriormente.
-  function registrarLugar() {
-    if (!nombre.trim() || !siglo || !direccion.trim()) {
-      Alert.alert('Información incompleta', 'Completa el nombre, el siglo y la ubicación escrita.');
+    const errores = validar();
+    if (errores.length > 0) {
+      Alert.alert('Revisa el formulario', errores.join('\n'));
       return;
     }
 
-    if (!coordenadas) {
-      Alert.alert('Ubicación pendiente', 'Selecciona una ubicación en el mapa.');
-      return;
-    }
+    const actual = urlActual.trim();
+    const seccionesHistoria = [
+      { titulo: 'Origen y construcción', texto: origen.trim() },
+      { titulo: 'Transformaciones del lugar', texto: transformaciones.trim() },
+      { titulo: 'Significado cultural', texto: significado.trim() },
+    ].filter((s) => s.texto);
 
-    const datosLugar = {
-      nombre,
+    const lugar = {
+      id: crearSlug(nombre, ciudad),
+      nombre: nombre.trim(),
+      sector: sector.trim(),
+      ciudad: ciudad.trim(),
+      pais: pais.trim(),
       siglo,
-      direccion,
-      descripcion,
-      coordenadas,
-      fotografias,
-      fotografiaActual,
-      historia: { origen, transformaciones, significado },
+      epoca: SIGLOS.find((s) => s.value === siglo).label,
+      coords: { lat: coordenadas.latitude, lng: coordenadas.longitude },
+      imagen: actual || null,
+      imagenActual: actual || null,
+      descripcion: descripcion.trim(),
+      fotosHistoricas: fotografias
+        .filter((f) => f.anio.trim())
+        .map((f) => ({ anio: f.anio.trim(), uri: f.url.trim() || null })),
+      historia: seccionesHistoria,
+      fuentes: [],
+      contenidoVerificado: false,
     };
 
-    console.log('Datos del lugar:', datosLugar);
-
-    Alert.alert('Formulario completado', 'Los datos están listos para conectarse con el backend.');
+    try {
+      setEnviando(true);
+      await createPlace(lugar);
+      limpiarFormulario();
+      Alert.alert('Lugar registrado', `"${lugar.nombre}" ya está disponible en Retazo.`);
+    } catch (error) {
+      let mensaje = error?.message || 'No fue posible registrar el lugar. Inténtalo de nuevo.';
+      if (error?.status === 401) mensaje = 'Tu sesión expiró. Inicia sesión de nuevo.';
+      else if (error?.status === 403) mensaje = 'Tu cuenta no tiene permiso para agregar lugares.';
+      else if (error?.status === 409) mensaje = 'Ya existe un lugar con ese nombre en esa ciudad.';
+      Alert.alert('No se pudo registrar', mensaje);
+    } finally {
+      setEnviando(false);
+    }
   }
 
   return (
@@ -296,42 +348,25 @@ export default function AgregarLugarScreen() {
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Encabezado */}
           <View style={styles.header}>
-            <View>
-              <Text style={styles.logo}>Retazo</Text>
-            </View>
-
+            <Text style={styles.logo}>Retazo</Text>
             <Text style={styles.userType}>Ente organizacional</Text>
           </View>
 
           <Text style={styles.title}>Agregar lugar histórico</Text>
-
           <Text style={styles.subtitle}>
-            Completa la información y las fotografías para registrar el lugar en Retazo.
+            Completa la información y pega los enlaces de las imágenes para registrar el lugar en Retazo.
           </Text>
 
-          {/* Datos del lugar */}
           <Seccion titulo="DATOS DEL LUGAR">
-            <Campo
-              label="Nombre del lugar"
-              value={nombre}
-              onChangeText={setNombre}
-              placeholder="Escribe el nombre del lugar"
-            />
+            <Campo label="Nombre del lugar" value={nombre} onChangeText={setNombre} placeholder="Escribe el nombre del lugar" />
 
             <SelectorSiglo siglo={siglo} onSelect={setSiglo} />
 
-            <Campo
-              label="Ubicación escrita"
-              value={direccion}
-              onChangeText={setDireccion}
-              placeholder="Dirección, ciudad y país"
-              multiline
-              height={60}
-            />
+            <Campo label="Sector o barrio" value={sector} onChangeText={setSector} placeholder="Ej. Centro Histórico" />
+            <Campo label="Ciudad" value={ciudad} onChangeText={setCiudad} placeholder="Ej. Tegucigalpa" />
+            <Campo label="País" value={pais} onChangeText={setPais} placeholder="Ej. Honduras" />
 
-            {/* Mapa seleccionable */}
             <View style={styles.field}>
               <Text style={styles.label}>Ubicación en el mapa</Text>
 
@@ -358,9 +393,7 @@ export default function AgregarLugarScreen() {
                 </TouchableOpacity>
               )}
 
-              <Text style={styles.helperText}>
-                Toca el mapa o arrastra el marcador para indicar la ubicación exacta.
-              </Text>
+              <Text style={styles.helperText}>Toca el mapa o arrastra el marcador para indicar la ubicación exacta.</Text>
 
               {coordenadas && (
                 <Text style={styles.coordinates}>
@@ -379,50 +412,36 @@ export default function AgregarLugarScreen() {
             />
           </Seccion>
 
-          {/* Fotografías históricas */}
           <Seccion
             titulo="FOTOGRAFÍAS HISTÓRICAS"
-            descripcion="Agrega varias fotografías e indica el año de cada una."
+            descripcion="Pega el enlace de cada fotografía e indica su año. Las tarjetas vacías se ignoran."
           >
             {fotografias.map((foto) => (
               <TarjetaFotografia
                 key={foto.id}
                 foto={foto}
                 puedeEliminar={fotografias.length > 1}
-                onPickPhoto={() => agregarFotografiaHistorica(foto.id)}
-                onChangeYear={(value) => actualizarAnio(foto.id, value)}
-                onRemove={() => eliminarFotografia(foto.id)}
+                onChangeUrl={(url) => actualizarFoto(foto.id, { url })}
+                onChangeYear={(anio) => actualizarFoto(foto.id, { anio })}
+                onRemove={() => setFotografias((fs) => fs.filter((f) => f.id !== foto.id))}
               />
             ))}
 
-            <TouchableOpacity style={styles.addPhotoButton} onPress={agregarCampoFotografia} accessibilityRole="button">
+            <TouchableOpacity
+              style={styles.addPhotoButton}
+              onPress={() => setFotografias((fs) => [...fs, nuevaFoto()])}
+              accessibilityRole="button"
+            >
               <Text style={styles.addPhotoText}>＋ Agregar otra fotografía</Text>
             </TouchableOpacity>
           </Seccion>
 
-          {/* Fotografía actual */}
-          <Seccion
-            titulo="FOTOGRAFÍA ACTUAL"
-            descripcion="Sube una fotografía del estado actual del lugar histórico."
-          >
-            <TouchableOpacity style={styles.currentPhoto} onPress={agregarFotografiaActual} accessibilityRole="button">
-              {fotografiaActual ? (
-                <Image source={{ uri: fotografiaActual }} style={styles.currentPhotoImage} />
-              ) : (
-                <>
-                  <Text style={styles.currentPhotoIcon}>⇧</Text>
-                  <Text style={styles.currentPhotoText}>Subir fotografía actual</Text>
-                  <Text style={styles.fileTypes}>JPG o PNG</Text>
-                </>
-              )}
-            </TouchableOpacity>
+          <Seccion titulo="FOTOGRAFÍA ACTUAL" descripcion="Pega el enlace de una fotografía del estado actual del lugar.">
+            <Campo label="URL de la fotografía actual" value={urlActual} onChangeText={setUrlActual} placeholder="https://..." url />
+            <VistaPrevia url={urlActual} style={styles.currentPhoto} />
           </Seccion>
 
-          {/* Historia */}
-          <Seccion
-            titulo="HISTORIA DEL LUGAR"
-            descripcion="Cuenta la historia del lugar en los siguientes apartados."
-          >
+          <Seccion titulo="HISTORIA DEL LUGAR" descripcion="Cuenta la historia del lugar en los siguientes apartados (opcional).">
             <Campo
               label="Origen y construcción"
               value={origen}
@@ -431,7 +450,6 @@ export default function AgregarLugarScreen() {
               multiline
               height={95}
             />
-
             <Campo
               label="Transformaciones del lugar"
               value={transformaciones}
@@ -440,7 +458,6 @@ export default function AgregarLugarScreen() {
               multiline
               height={95}
             />
-
             <Campo
               label="Significado cultural"
               value={significado}
@@ -451,9 +468,14 @@ export default function AgregarLugarScreen() {
             />
           </Seccion>
 
-          {/* Botón de registro */}
-          <TouchableOpacity style={styles.submitButton} onPress={registrarLugar} accessibilityRole="button">
-            <Text style={styles.submitText}>Agregar lugar histórico</Text>
+          <TouchableOpacity
+            style={[styles.submitButton, enviando && styles.submitDisabled]}
+            onPress={registrarLugar}
+            disabled={enviando}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: enviando, busy: enviando }}
+          >
+            {enviando ? <ActivityIndicator color="#FFF9EF" /> : <Text style={styles.submitText}>Agregar lugar histórico</Text>}
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -555,55 +577,19 @@ const styles = StyleSheet.create({
   },
 
   selectContainer: {
-    minHeight: 43,
-    backgroundColor: COLORS.paper,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 11,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    minHeight: 43, backgroundColor: COLORS.paper, borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: 11, paddingHorizontal: 12, flexDirection: 'row',
+    justifyContent: 'space-between', alignItems: 'center',
   },
 
-  selectValue: {
-    color: COLORS.muted,
-    fontSize: 12,
+  selectValue: { color: COLORS.muted, fontSize: 12 },
+
+  photoPreview: {
+    width: 55, height: 55, borderRadius: 8, overflow: 'hidden', backgroundColor: COLORS.map,
   },
 
-  selectArrow: {
-    fontSize: 22,
-    color: COLORS.muted,
-  },
-
-  centuries: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 7,
-    marginTop: 8,
-  },
-
-  centuryOption: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    backgroundColor: COLORS.paper,
-  },
-
-  centurySelected: {
-    backgroundColor: COLORS.ink,
-    borderColor: COLORS.ink,
-  },
-
-  centuryText: {
-    fontSize: 11,
-    color: COLORS.muted,
-  },
-
-  centurySelectedText: {
-    color: COLORS.paper,
+  currentPhoto: {
+    height: 150, borderRadius: 13, overflow: 'hidden', backgroundColor: COLORS.map, marginTop: 4,
   },
 
   mapContainer: {
@@ -665,34 +651,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 
-  photoPreview: {
-    width: 55,
-    height: 55,
-    backgroundColor: COLORS.map,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-
-  photoImage: {
-    width: '100%',
-    height: '100%',
-  },
-
-  photoPlaceholder: {
-    fontSize: 30,
-    color: '#C8B99E',
-  },
-
   uploadButton: {
     flex: 1,
-  },
-
-  uploadText: {
-    color: COLORS.gold,
-    fontSize: 12,
-    fontWeight: '600',
   },
 
   fileTypes: {
@@ -722,35 +682,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  currentPhoto: {
-    height: 130,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderStyle: 'dashed',
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.paper,
-    overflow: 'hidden',
-  },
-
-  currentPhotoIcon: {
-    color: COLORS.gold,
-    fontSize: 30,
-  },
-
-  currentPhotoText: {
-    color: COLORS.gold,
-    fontSize: 12,
-    marginTop: 5,
-    fontWeight: '600',
-  },
-
-  currentPhotoImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
 
   submitButton: {
     height: 48,
@@ -767,4 +698,30 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+
+  selectContainerOpen: { borderColor: COLORS.gold },
+
+  selectValueActive: { color: COLORS.ink },
+
+  dropdownList: {
+    marginTop: 6, backgroundColor: COLORS.paper, borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: 11, overflow: 'hidden',
+  },
+
+  dropdownItem: {
+    paddingHorizontal: 12, paddingVertical: 12, flexDirection: 'row',
+    justifyContent: 'space-between', alignItems: 'center',
+  },
+
+  dropdownItemBorder: { borderTopWidth: 1, borderTopColor: COLORS.border },
+
+  dropdownItemActive: { backgroundColor: 'rgba(172,121,51,0.1)' },
+
+  dropdownText: { fontSize: 12, color: COLORS.ink },
+
+  dropdownTextActive: { color: COLORS.gold, fontWeight: '600' },
+
+  previewEmpty: { alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.map },
+
+  submitDisabled: { opacity: 0.6 },
 });

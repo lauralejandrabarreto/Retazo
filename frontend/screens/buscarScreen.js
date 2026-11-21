@@ -8,17 +8,23 @@ import PlaceCard from '../components/PlaceCard';
 import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import { LoadingState, EmptyState, ErrorState } from '../components/StateMessage';
 import { getPlaces, filterPlaces } from '../services/placesService';
-import { PERIODS } from '../data/places';
+import { getPeriods, ALL_PERIODS } from '../services/periodsService';
 import { pluralize } from '../utils/text';
 import useAsync from '../hooks/useAsync';
 
 // P-02 Buscar: búsqueda por nombre, sector o ciudad (sin distinguir tildes ni
-// mayúsculas) y filtro por periodo. Ambos se combinan sobre los datos locales.
+// mayúsculas) y filtro por periodo. Los lugares y los periodos vienen de la API;
+// el filtrado se hace en memoria para responder mientras el usuario escribe.
 export default function BuscarScreen({ navigation, route }) {
   const [query, setQuery] = useState('');
-  const [period, setPeriod] = useState('todos');
+  const [period, setPeriod] = useState(ALL_PERIODS.id);
   const inputRef = useRef(null);
   const { data: places, loading, error, retry } = useAsync(() => getPlaces(), []);
+  const { data: periods } = useAsync(() => getPeriods(), []);
+
+  // "Todos" siempre está disponible. Si los periodos no cargan, la búsqueda por
+  // nombre sigue funcionando y solo falta el filtro por siglo.
+  const periodOptions = useMemo(() => [ALL_PERIODS, ...(periods ?? [])], [periods]);
 
   // Si se llega desde la barra de búsqueda de Inicio, se enfoca el campo.
   const focusSearch = route?.params?.focusSearch;
@@ -27,10 +33,10 @@ export default function BuscarScreen({ navigation, route }) {
   }, [focusSearch]);
 
   const results = useMemo(() => filterPlaces(places ?? [], { query, period }), [places, query, period]);
-  const hasFilters = query.trim() !== '' || period !== 'todos';
+  const hasFilters = query.trim() !== '' || period !== ALL_PERIODS.id;
   const clearFilters = () => {
     setQuery('');
-    setPeriod('todos');
+    setPeriod(ALL_PERIODS.id);
   };
 
   return (
@@ -63,8 +69,8 @@ export default function BuscarScreen({ navigation, route }) {
       <View>
         <FlatList
           horizontal
-          data={PERIODS}
-          keyExtractor={(p) => p.id}
+          data={periodOptions}
+          keyExtractor={(p) => String(p.id)}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterRow}
           renderItem={({ item }) => {

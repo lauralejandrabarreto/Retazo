@@ -15,7 +15,8 @@ import { useFavorites } from '../context/FavoritesContext';
 import usePlace from '../hooks/usePlace';
 
 // P-03 Lugar histórico: información general del lugar seleccionado y accesos a
-// Comparación (P-04) e Historia (P-05). Permite agregar o quitar de favoritos.
+// Comparación (P-04) e Historia (P-05). Permite agregar o quitar de favoritos
+// (requiere sesión: los favoritos se guardan en el servidor).
 export default function LugarHistoricoScreen({ navigation, route }) {
   const { data: place, loading, error, retry } = usePlace(route);
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -33,9 +34,21 @@ export default function LugarHistoricoScreen({ navigation, route }) {
 
   const saved = isFavorite(place.id);
   const historical = place.fotosHistoricas.find((f) => f.uri);
-  const onToggleFavorite = () => {
-    const added = toggleFavorite(place.id);
-    toast.show(added ? 'Guardado en Favoritos' : 'Eliminado de Favoritos', added ? 'heart' : 'trash-2');
+
+  // El corazón cambia al instante; si el servidor falla, el contexto lo revierte y se avisa.
+  const onToggleFavorite = async () => {
+    try {
+      const added = await toggleFavorite(place);
+      if (added === null) return; // ya había una petición de este lugar en curso
+      toast.show(added ? 'Guardado en Favoritos' : 'Eliminado de Favoritos', added ? 'heart' : 'trash-2');
+    } catch (e) {
+      toast.show(
+        e.code === 'AUTH_REQUIRED'
+          ? 'Inicia sesión para guardar favoritos'
+          : 'No se pudo actualizar tus favoritos. Intenta de nuevo.',
+        'alert-circle',
+      );
+    }
   };
 
   return (

@@ -1,32 +1,23 @@
-// Capa de acceso a datos de lugares históricos.
+// Capa de acceso a datos de lugares históricos (backend Ktor).
 //
-// Todas las pantallas obtienen la información desde aquí. Hoy responde con los
-// datos locales de data/places.js; mañana podrá consultar la API en Ktor sin que
-// cambien las pantallas (ver services/apiConfig.js).
+// Los errores NO se capturan aquí: suben hasta useAsync, que muestra "Reintentar".
 
-import { PLACES, SIMULATED_LOCATION } from '../data/places';
-import { USE_MOCK_DATA, apiGet } from './apiConfig';
+import { SIMULATED_LOCATION } from '../data/constants';
+import { apiGet, apiPost, apiPut, apiDelete } from './apiConfig';
 import { normalize } from '../utils/text';
-import { distanceInMeters } from '../utils/geo';
 
-// Pequeña espera para que los estados de carga se comporten como con una API real.
-const MOCK_DELAY_MS = 250;
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+// --- Lectura (públicas) ---
 
-export async function getPlaces() {
-  if (!USE_MOCK_DATA) return apiGet('/places');
-  await wait(MOCK_DELAY_MS);
-  return PLACES;
+export function getPlaces() {
+  return apiGet('/api/places');
 }
 
-export async function getPlaceById(id) {
-  if (!USE_MOCK_DATA) return apiGet(`/places/${encodeURIComponent(id)}`);
-  await wait(MOCK_DELAY_MS);
-  return PLACES.find((place) => place.id === id) ?? null;
+export function getPlaceById(id) {
+  return apiGet(`/api/places/${encodeURIComponent(id)}`);
 }
 
-// Filtro puro: se usa en Buscar sobre la lista ya cargada para responder al
-// instante mientras el usuario escribe.
+// Filtro puro en memoria: se usa en Buscar sobre la lista ya cargada para
+// responder al instante mientras el usuario escribe.
 export function filterPlaces(places, { query = '', period = 'todos' } = {}) {
   const q = normalize(query);
   return places.filter((place) => {
@@ -39,12 +30,31 @@ export function filterPlaces(places, { query = '', period = 'todos' } = {}) {
   });
 }
 
-// Lugares cercanos a la ubicación SIMULADA (no se usa GPS en esta entrega).
-export async function getNearbyPlaces({ maxMeters = 3000, limit = 3 } = {}) {
-  const places = await getPlaces();
-  return places
-    .map((place) => ({ ...place, distancia: distanceInMeters(SIMULATED_LOCATION.coords, place.coords) }))
-    .filter((place) => place.distancia <= maxMeters)
-    .sort((a, b) => a.distancia - b.distancia)
-    .slice(0, limit);
+// Lugares cercanos. Hoy usa la ubicación SIMULADA; cuando haya GPS se pasa la real en `coords`.
+export function getNearbyPlaces({
+  coords = SIMULATED_LOCATION.coords,
+  maxMeters = 3000,
+  limit = 3,
+} = {}) {
+  const params = new URLSearchParams({
+    lat: String(coords.lat),
+    lng: String(coords.lng),
+    maxMeters: String(maxMeters),
+    limit: String(limit),
+  });
+  return apiGet(`/api/places/nearby?${params.toString()}`);
+}
+
+// --- Administración (requieren sesión de organización; el token lo agrega apiConfig) ---
+
+export async function createPlace(place) {
+  return apiPost('/api/places', place);
+}
+
+export function putPlace(id, place) {
+  return apiPut(`/api/places/${encodeURIComponent(id)}`, place);
+}
+
+export function deletePlace(id) {
+  return apiDelete(`/api/places/${encodeURIComponent(id)}`); // 204 -> null
 }

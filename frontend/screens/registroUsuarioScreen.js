@@ -10,6 +10,7 @@ import PasswordRequirements from '../components/PasswordRequirements';
 import Toast, { useToast } from '../components/Toast';
 import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import { register, AUTH_ERRORS } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 import {
   validateFullName, validateEmail, validateNewPassword, validateConfirmPassword,
   isPasswordStrong, NAME_MAX_LENGTH, EMAIL_MAX_LENGTH, PASSWORD_MAX_LENGTH,
@@ -39,6 +40,7 @@ export default function RegistroUsuarioScreen({ navigation, route }) {
   const confirmRef = useRef(null);
   const redirectTimer = useRef(null);
   const toast = useToast();
+  const { signIn } = useAuth();
 
   useEffect(() => () => clearTimeout(redirectTimer.current), []);
 
@@ -64,22 +66,42 @@ export default function RegistroUsuarioScreen({ navigation, route }) {
 
   const onSubmit = async () => {
     if (!canSubmit) return;
+
     setFormError(null);
     setSubmitting(true);
+
     try {
-      await register({ nombre: name.trim(), email, password, perfil });
+      const session = await register({
+        nombre: name.trim(),
+        email,
+        password,
+      });
+
+      // Guardar usuario y token en el contexto.
+      signIn(session);
+
       toast.show('¡Cuenta creada! Bienvenido a Retazo', 'check-circle');
+
       redirectTimer.current = setTimeout(() => {
-        navigation.reset({ index: 0, routes: [{ name: 'TabsPrincipales' }] });
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'TabsPrincipales' }],
+        });
       }, 1100);
+
     } catch (error) {
       setSubmitting(false);
+
       if (error?.code === AUTH_ERRORS.EMAIL_IN_USE) {
         setEmailTaken(true);
         touch('email');
         emailRef.current?.focus();
+      } else if (error?.code === AUTH_ERRORS.VALIDATION) {
+        setFormError(error.message);
       } else {
-        setFormError('No fue posible crear la cuenta por un problema de conexión. Inténtalo de nuevo.');
+        setFormError(
+          'No fue posible crear la cuenta por un problema de conexión. Inténtalo de nuevo.'
+        );
       }
     }
   };

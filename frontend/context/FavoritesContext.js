@@ -1,65 +1,149 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, {
+  createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore,
+} from 'react';
+import { getAuthToken, subscribeAuthToken } from '../services/apiConfig';
+import { getFavorites, saveFavorite, deleteFavorite } from '../services/favoritesService';
 
-// Estado global de favoritos compartido por Lugar histórico y Favoritos.
-// Se guarda la lista de ids en el almacenamiento local del dispositivo
-// (AsyncStorage), de modo que persiste al cerrar y abrir la aplicación.
+// Estado global de favoritos, respaldado por el backend (/api/favoritos).
+//
+// - La fuente de verdad es el servidor: cada usuario ve solo sus favoritos.
+// - Hay sesión cuando apiConfig tiene un token (lo fija authService al iniciar sesión).
+//   El proveedor se suscribe a ese token: al iniciar o cerrar sesión la lista se recarga
+//   o se vacía sola, sin pasarle nada desde App.js.
+// - Los cambios son optimistas: el corazón cambia al instante y, si el servidor falla,
+//   se revierte y la función lanza el error para que la pantalla lo informe.
 
-const STORAGE_KEY = '@retazo/favoritos';
+export class FavoritesError extends Error {
+  constructor(code, message) {
+    super(message);
+    this.name = 'FavoritesError';
+    this.code = code; // 'AUTH_REQUIRED'
+  }
+}
 
 const FavoritesContext = createContext(null);
 
 export function FavoritesProvider({ children }) {
-  const [ids, setIds] = useState([]);
+  const token = useSyncExternalStore(subscribeAuthToken, getAuthToken);
+  const isAuthenticated = !!token;
+
+  const [favorites, setFavorites] = useState([]); // resúmenes de lugares, el más reciente primero
   const [ready, setReady] = useState(false);
-  const [storageError, setStorageError] = useState(null);
+  const [error, setError] = useState(null);
+
+  // Copia síncrona de la lista para decidir sin depender de renders pendientes.
+  const listRef = useRef([]);
+  const pendingRef = useRef(new Set());
+  const loadCounter = useRef(0);
+
+  const commit = useCallback((next) => {
+    listRef.current = next;
+    setFavorites(next);
+  }, []);
+
+  const refresh = useCallback(async () => {
+    const loadId = ++loadCounter.current; // descarta respuestas de cargas anteriores
+    pendingRef.current.clear();
+
+    if (!token) {
+      commit([]);
+      setError(null);
+      setReady(true);
+      return;
+    }
+
+    setReady(false);
+    setError(null);
+    try {
+      const list = await getFavorites();
+      if (loadId === loadCounter.current) commit(list ?? []);
+    } catch (e) {
+      if (__DEV__) console.warn('[favoritos] no se pudo cargar la lista:', e?.status, e?.message);
+      if (loadId === loadCounter.current) {
+        commit([]);
+        setError(e);
+      }
+    } finally {
+      if (loadId === loadCounter.current) setReady(true);
+    }
+  }, [token, commit]);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((raw) => {
-        const parsed = raw ? JSON.parse(raw) : [];
-        if (Array.isArray(parsed)) setIds(parsed);
-      })
-      .catch((error) => setStorageError(error))
-      .finally(() => setReady(true));
-  }, []);
+    refresh();
+  }, [refresh]);
 
-  const persist = useCallback((next) => {
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch((error) => setStorageError(error));
-  }, []);
+  const isFavorite = useCallback((id) => favorites.some((f) => f.id === id), [favorites]);
 
+  // Guarda o quita un lugar. Recibe el lugar (necesita nombre, sector, ciudad, epoca e
+  // imagen para pintarlo en la lista). Devuelve true si se agregó, false si se quitó y
+  // null si se ignoró por haber otra petición del mismo lugar en curso.
   const toggleFavorite = useCallback(
-    (id) => {
-      const added = !ids.includes(id);
-      const next = added ? [id, ...ids] : ids.filter((x) => x !== id);
-      setIds(next);
-      persist(next);
-      return added; // true = se agregó, false = se eliminó
+    async (place) => {
+      if (!token) throw new FavoritesError('AUTH_REQUIRED', 'Inicia sesión para guardar favoritos.');
+      if (pendingRef.current.has(place.id)) return null;
+
+      const wasFavorite = listRef.current.some((f) => f.id === place.id);
+      commit(wasFavorite ? listRef.current.filter((f) => f.id !== place.id) : [place, ...listRef.current]);
+
+      pendingRef.current.add(place.id);
+      try {
+        if (wasFavorite) await deleteFavorite(place.id);
+        else await saveFavorite(place.id);
+        return !wasFavorite;
+      } catch (e) {
+        // Revierte solo este lugar, sin pisar otros cambios hechos mientras tanto.
+        commit(
+          wasFavorite
+            ? [place, ...listRef.current.filter((f) => f.id !== place.id)]
+            : listRef.current.filter((f) => f.id !== place.id),
+        );
+        throw e;
+      } finally {
+        pendingRef.current.delete(place.id);
+      }
     },
-    [ids, persist],
+    [token, commit],
   );
 
+  // Quita un lugar por id (botón del corazón en la lista de Favoritos).
   const removeFavorite = useCallback(
-    (id) => {
-      setIds((current) => {
-        const next = current.filter((x) => x !== id);
-        persist(next);
-        return next;
-      });
+    async (id) => {
+      if (!token) throw new FavoritesError('AUTH_REQUIRED', 'Inicia sesión para gestionar favoritos.');
+      if (pendingRef.current.has(id)) return;
+
+      const removed = listRef.current.find((f) => f.id === id);
+      if (!removed) return;
+      const index = listRef.current.indexOf(removed);
+      commit(listRef.current.filter((f) => f.id !== id));
+
+      pendingRef.current.add(id);
+      try {
+        await deleteFavorite(id);
+      } catch (e) {
+        // Lo devuelve a su posición original.
+        const copy = listRef.current.filter((f) => f.id !== id);
+        copy.splice(Math.min(index, copy.length), 0, removed);
+        commit(copy);
+        throw e;
+      } finally {
+        pendingRef.current.delete(id);
+      }
     },
-    [persist],
+    [token, commit],
   );
 
   const value = useMemo(
     () => ({
-      favoriteIds: ids,
+      favorites,
       ready,
-      storageError,
-      isFavorite: (id) => ids.includes(id),
+      error,
+      isAuthenticated,
+      isFavorite,
       toggleFavorite,
       removeFavorite,
+      refresh,
     }),
-    [ids, ready, storageError, toggleFavorite, removeFavorite],
+    [favorites, ready, error, isAuthenticated, isFavorite, toggleFavorite, removeFavorite, refresh],
   );
 
   return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;

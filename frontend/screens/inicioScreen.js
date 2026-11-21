@@ -6,22 +6,24 @@ import { Feather } from '@expo/vector-icons';
 import { C, F, SPACING, RADIUS } from '../theme';
 import PlaceCard from '../components/PlaceCard';
 import PlaceImage from '../components/PlaceImage';
+import NoticeBox from '../components/NoticeBox';
 import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import { LoadingState, EmptyState, ErrorState } from '../components/StateMessage';
 import { getNearbyPlaces } from '../services/placesService';
-import { MAP_BACKGROUND, SIMULATED_LOCATION } from '../data/places';
+import { MAP_BACKGROUND } from '../data/constants';
 import { formatDistance } from '../utils/geo';
 import useAsync from '../hooks/useAsync';
+import useUserLocation from '../hooks/useUserLocation';
 
 // P-01 Inicio. El "mapa" es una vista esquemática: los pines se ubican según las
-// coordenadas reales de cada lugar respecto a una ubicación SIMULADA del usuario.
-// No hay mapa real ni GPS en esta entrega.
+// coordenadas de cada lugar respecto a la ubicación del usuario (real si concedió el
+// permiso; de ejemplo si no). Todavía no es un mapa interactivo.
 
 const HERO_HEIGHT = 240;
 
-function projectPins(places) {
-  if (!places?.length) return [];
-  const { lat, lng } = SIMULATED_LOCATION.coords;
+function projectPins(places, origin) {
+  if (!places?.length || !origin) return [];
+  const { lat, lng } = origin;
   const toXY = (p) => ({
     x: (p.coords.lng - lng) * Math.cos((lat * Math.PI) / 180) * 111320,
     y: (p.coords.lat - lat) * 110540,
@@ -36,9 +38,19 @@ function projectPins(places) {
 }
 
 export default function InicioScreen({ navigation }) {
-  const { data: nearby, loading, error, retry } = useAsync(() => getNearbyPlaces(), []);
+  const location = useUserLocation();
+  const { coords } = location;
+  const locating = location.status === 'loading';
+
+  // Se vuelve a consultar cuando cambia la ubicación (o se reintenta).
+  const { data: nearby, loading: loadingNearby, error, retry } = useAsync(
+    () => (coords ? getNearbyPlaces({ coords }) : Promise.resolve(null)),
+    [coords?.lat, coords?.lng],
+  );
+
+  const loading = locating || loadingNearby;
   const openPlace = (place) => navigation.navigate('LugarHistorico', { placeId: place.id });
-  const pins = projectPins(nearby);
+  const pins = projectPins(nearby, coords);
 
   return (
     <View style={styles.container}>
@@ -54,12 +66,19 @@ export default function InicioScreen({ navigation }) {
           <Text style={styles.logo}>Retazo</Text>
           <View style={styles.locationPill}>
             <Feather name="map-pin" size={12} color={C.white} />
-            <Text style={styles.locationText}>{SIMULATED_LOCATION.label}</Text>
+            <Text style={styles.locationText} numberOfLines={1}>
+              {locating ? 'Ubicando…' : location.label}
+            </Text>
           </View>
         </SafeAreaView>
 
-        {/* Ubicación simulada del usuario */}
-        <View style={[styles.userDot, { left: '50%', top: '64%' }]} accessibilityLabel="Ubicación simulada" />
+        {/* Ubicación del usuario */}
+        {!locating && (
+          <View
+            style={[styles.userDot, { left: '50%', top: '64%' }]}
+            accessibilityLabel={location.isFallback ? 'Ubicación de ejemplo' : 'Tu ubicación'}
+          />
+        )}
 
         {pins.map(({ place, left, top }) => (
           <TouchableOpacity
@@ -73,7 +92,9 @@ export default function InicioScreen({ navigation }) {
           </TouchableOpacity>
         ))}
 
-        <Text style={styles.mapCaption}>Vista esquemática · ubicación simulada</Text>
+        <Text style={styles.mapCaption}>
+          {location.isFallback ? 'Vista esquemática · ubicación de ejemplo' : 'Vista esquemática · tu ubicación'}
+        </Text>
       </View>
 
       <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
@@ -90,6 +111,21 @@ export default function InicioScreen({ navigation }) {
           <Feather name="sliders" size={15} color={C.amber} />
         </TouchableOpacity>
 
+        {/* Aviso cuando no se pudo usar la ubicación real */}
+        {!locating && location.isFallback && (
+          <NoticeBox icon="map-pin" tone="neutral">
+            {location.status === 'denied'
+              ? 'No tenemos permiso para usar tu ubicación. Mostramos lugares cerca de una ubicación de ejemplo. Puedes activarla en los ajustes del teléfono.'
+              : 'No pudimos obtener tu ubicación. Revisa que los servicios de ubicación del dispositivo estén activados (en una PC con Windows, también en Configuración > Privacidad > Ubicación). Mostramos una ubicación de ejemplo.'}
+          </NoticeBox>
+        )}
+        {!locating && location.isFallback && (
+          <TouchableOpacity onPress={location.retry} accessibilityRole="button" style={styles.retryLocation}>
+            <Feather name="refresh-cw" size={13} color={C.amber} />
+            <Text style={styles.sectionLink}>Intentar de nuevo con mi ubicación</Text>
+          </TouchableOpacity>
+        )}
+
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionLabel}>LUGARES CERCANOS</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Buscar')} accessibilityRole="button">
@@ -97,13 +133,13 @@ export default function InicioScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {loading && <LoadingState label="Buscando lugares cercanos…" />}
+        {loading && <LoadingState label={locating ? 'Obteniendo tu ubicación…' : 'Buscando lugares cercanos…'} />}
         {!loading && error && <ErrorState onRetry={retry} />}
         {!loading && !error && nearby?.length === 0 && (
           <EmptyState
             icon="map"
             title="No hay lugares cercanos"
-            message="No encontramos lugares históricos a menos de 3 km."
+            message="No encontramos lugares históricos a menos de 3 km de tu ubicación."
             actionLabel="Explorar todos"
             onAction={() => navigation.navigate('Buscar')}
           />
@@ -137,11 +173,11 @@ const styles = StyleSheet.create({
   },
   logo: { fontSize: 26, color: C.white, fontFamily: F.serifItalic },
   locationPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
+    flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1, marginLeft: SPACING.md,
     backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: RADIUS.pill,
     paddingHorizontal: 10, paddingVertical: 5,
   },
-  locationText: { fontSize: 11, color: C.white, fontFamily: F.sansMed },
+  locationText: { fontSize: 11, color: C.white, fontFamily: F.sansMed, flexShrink: 1 },
   userDot: {
     position: 'absolute', width: 14, height: 14, marginLeft: -7, marginTop: -7, borderRadius: 7,
     backgroundColor: C.ink, borderWidth: 3, borderColor: C.white,
@@ -164,6 +200,7 @@ const styles = StyleSheet.create({
   },
   searchPlaceholder: { flex: 1, fontSize: 13, color: C.brown, fontFamily: F.sans },
   searchDivider: { width: 1, height: 16, backgroundColor: C.border },
+  retryLocation: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingVertical: 4 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   sectionLabel: { fontSize: 10, color: C.brown, letterSpacing: 1.2, fontFamily: F.mono },
   sectionLink: { fontSize: 11, color: C.amber, fontFamily: F.sansMed },

@@ -1,55 +1,51 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { C, F, SPACING } from '../theme';
 import PlaceCard from '../components/PlaceCard';
-import NoticeBox from '../components/NoticeBox';
 import Toast, { useToast } from '../components/Toast';
 import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import { LoadingState, EmptyState, ErrorState } from '../components/StateMessage';
 import { useFavorites } from '../context/FavoritesContext';
-import { getPlaces } from '../services/placesService';
 import { pluralize } from '../utils/text';
-import useAsync from '../hooks/useAsync';
 
-// P-06 Favoritos: lugares guardados por el usuario (persisten en el dispositivo).
+// P-06 Favoritos: lugares guardados por el usuario. Se guardan en el servidor
+// (/api/favoritos), por eso requieren sesión y se conservan entre dispositivos.
 export default function FavoritosScreen({ navigation }) {
-  const { favoriteIds, ready, storageError, removeFavorite } = useFavorites();
-  const { data: places, loading, error, retry } = useAsync(() => getPlaces(), []);
+  const { favorites, ready, error, isAuthenticated, removeFavorite, refresh } = useFavorites();
   const toast = useToast();
 
-  // Se respeta el orden de guardado (el más reciente primero).
-  const favorites = useMemo(() => {
-    if (!places) return [];
-    return favoriteIds.map((id) => places.find((p) => p.id === id)).filter(Boolean);
-  }, [favoriteIds, places]);
-
-  const onRemove = (place) => {
-    removeFavorite(place.id);
-    toast.show(`${place.nombre} se eliminó de Favoritos`, 'trash-2');
+  const onRemove = async (place) => {
+    try {
+      await removeFavorite(place.id);
+      toast.show(`${place.nombre} se eliminó de Favoritos`, 'trash-2');
+    } catch {
+      toast.show('No se pudo quitar el favorito. Intenta de nuevo.', 'alert-circle');
+    }
   };
 
-  const isLoading = loading || !ready;
+  const showList = isAuthenticated && ready && !error;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <FocusAwareStatusBar style="dark" />
       <View style={styles.header}>
         <Text style={styles.title}>Favoritos</Text>
-        {!isLoading && (
+        {showList && (
           <Text style={styles.subtitle}>{pluralize(favorites.length, 'lugar en tu colección', 'lugares en tu colección')}</Text>
         )}
       </View>
 
-      {!!storageError && (
-        <NoticeBox icon="alert-triangle" style={{ marginHorizontal: SPACING.xl, marginBottom: SPACING.md }}>
-          No fue posible acceder al almacenamiento local. Los cambios podrían no conservarse al cerrar la app.
-        </NoticeBox>
+      {!isAuthenticated && (
+        <EmptyState
+          icon="lock"
+          title="Inicia sesión para ver tus favoritos"
+          message="Tus lugares guardados se asocian a tu cuenta y se conservan en cualquier dispositivo."
+        />
       )}
-
-      {isLoading && <LoadingState label="Cargando favoritos…" />}
-      {!isLoading && error && <ErrorState onRetry={retry} />}
-      {!isLoading && !error && (
+      {isAuthenticated && !ready && <LoadingState label="Cargando favoritos…" />}
+      {isAuthenticated && ready && error && <ErrorState onRetry={refresh} />}
+      {showList && (
         <FlatList
           data={favorites}
           keyExtractor={(p) => p.id}

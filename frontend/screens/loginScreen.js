@@ -61,8 +61,8 @@ export default function LoginScreen({ navigation }) {
 
     setSubmitting(true);
     try {
-      const user = await login({ email, password });
-      signIn(user);
+      const session = await login({ email, password });
+      signIn(session);
       goToApp();
     } catch (error) {
       if (error?.code === AUTH_ERRORS.INVALID_CREDENTIALS) {
