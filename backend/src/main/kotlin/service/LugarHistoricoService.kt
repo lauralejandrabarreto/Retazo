@@ -149,12 +149,12 @@ class LugarHistoricoService(
         if (coords.lat !in -90.0..90.0) add("La latitud debe estar entre -90 y 90.")
         if (coords.lng !in -180.0..180.0) add("La longitud debe estar entre -180 y 180.")
 
-        imagen?.let { if (!it.esUrlHttp()) add("La imagen debe ser una URL http(s).") }
-        imagenActual?.let { if (!it.esUrlHttp()) add("La imagen actual debe ser una URL http(s).") }
+        imagen?.let { if (!it.esUrlImagen()) add("La imagen debe ser una URL http(s) o una ruta del servidor (/imagenes/...).") }
+        imagenActual?.let { if (!it.esUrlImagen()) add("La imagen actual debe ser una URL http(s) o una ruta del servidor (/imagenes/...).") }
 
         fotosHistoricas.forEachIndexed { i, foto ->
             if (foto.anio.isEmpty()) add("La fotografía histórica ${i + 1} necesita un año.")
-            foto.uri?.let { if (!it.esUrlHttp()) add("La fotografía histórica ${i + 1} debe tener una URL http(s).") }
+            foto.uri?.let { if (!it.esUrlImagen()) add("La fotografía histórica ${i + 1} debe tener una URL http(s) o una ruta del servidor.") }
         }
         historia.forEachIndexed { i, seccion ->
             if (seccion.titulo.isEmpty()) add("La sección de historia ${i + 1} necesita un título.")
@@ -170,6 +170,11 @@ class LugarHistoricoService(
 
     private fun String.esUrlHttp(): Boolean =
         startsWith("http://", ignoreCase = true) || startsWith("https://", ignoreCase = true)
+
+    // Las fotos de los lugares de prueba se sirven desde el propio backend con rutas relativas
+    // (/imagenes/... y /uploads/imagenes/...); la app les antepone la dirección del servidor.
+    private fun String.esUrlImagen(): Boolean =
+        esUrlHttp() || ((startsWith("/imagenes/") || startsWith("/uploads/imagenes/")) && !contains(".."))
 
     private companion object {
         const val SIGLO_TODOS = "todos"

@@ -130,7 +130,7 @@ export const PLACES = [
     siglo: 'XIX',
     epoca: 'Siglo XIX',
     coords: { lat: 4.5966, lng: -74.0743 },
-    imagen: 'https://bogota.gov.co/sites/default/files/2019-03/archivo_instituto_distrital_de_turismo_12.jpg',
+    imagen: 'https://commons.wikimedia.org/wiki/Special:FilePath/Teatro_Cristobal_Col%C3%B3n.JPG?width=1280',
     imagenActual: 'https://commons.wikimedia.org/wiki/Special:FilePath/Teatro_Cristobal_Col%C3%B3n.JPG?width=1280',
     fotosHistoricas: [
       { anio: '~ 1890', uri: 'https://www.elnuevosiglo.com.co/sites/default/files/2020-10/23ad%20foto2-oct04.jpg' },
