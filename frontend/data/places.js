@@ -75,7 +75,7 @@ export const PLACES = [
     imagen: unsplash(IMG.plazaBolivar, 300, 300),
     imagenActual: 'https://commons.wikimedia.org/wiki/Special:FilePath/Plaza_de_Bol%C3%ADvar_desde_el_Museo_de_la_Independencia.JPG?width=1280',
     fotosHistoricas: [
-      { anio: '1846', uri: 'https://www.utadeo.edu.co/sites/tadeo/files/node/wysiwyg/plaza_mayordebogota.1846.edward.wallhouse_mark_-coleccion.banco_.de_.la_.republica.jpg' },
+      { anio: '1846', uri: '/imagenes/plaza-bolivar-historica-1846.jpg' },
       { anio: '1950', uri: 'https://i.pinimg.com/736x/fc/38/74/fc38747650a917ec1d4553a9bdd7818c.jpg' },
       //{ anio: '1985', uri: null },
     ],
@@ -175,7 +175,7 @@ export const PLACES = [
     imagen: unsplash(IMG.sabana, 300, 300),
     imagenActual: unsplash(IMG.sabana, 900, 700),
     fotosHistoricas: [
-      { anio: '1960', uri: null },
+      { anio: '1960', uri: '/imagenes/estacion-sabana-historica-1960.jpg' },
     ],
     descripcion:
       'Antigua estación central del ferrocarril en Bogotá, cuyo edificio principal data de comienzos del siglo XX.',
@@ -237,7 +237,7 @@ export const PLACES = [
     imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCSp3SVbpwDPGtYcxw0HpogrNIc9gbCAbTJbNkpXLnjZVJPv_u52-qrRo&s=10',
     imagenActual: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/12/47/38/50/basilica-de-suyapa.jpg?w=1200&h=-1&s=1',
     fotosHistoricas: [
-      { anio: '1973', uri: null },
+      { anio: '1973', uri: '/imagenes/basilica-suyapa-historica-1973.jpg' },
     ],
     descripcion:
       'Santuario dedicado a la Virgen de Suyapa. Su construcción comenzó a mediados del siglo XX y es un importante centro de peregrinación.',

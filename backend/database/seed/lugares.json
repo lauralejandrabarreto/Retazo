@@ -17,7 +17,7 @@
     "fotosHistoricas": [
       {
         "anio": "1846",
-        "uri": "https://www.utadeo.edu.co/sites/tadeo/files/node/wysiwyg/plaza_mayordebogota.1846.edward.wallhouse_mark_-coleccion.banco_.de_.la_.republica.jpg"
+        "uri": "/imagenes/plaza-bolivar-historica-1846.jpg"
       },
       {
         "anio": "1950",
@@ -223,7 +223,7 @@
     "fotosHistoricas": [
       {
         "anio": "1960",
-        "uri": null
+        "uri": "/imagenes/estacion-sabana-historica-1960.jpg"
       }
     ],
     "historia": [
@@ -380,7 +380,7 @@
     "fotosHistoricas": [
       {
         "anio": "1973",
-        "uri": null
+        "uri": "/imagenes/basilica-suyapa-historica-1973.jpg"
       }
     ],
     "historia": [
