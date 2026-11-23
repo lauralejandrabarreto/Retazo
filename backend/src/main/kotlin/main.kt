@@ -1,7 +1,6 @@
-import com.google.auth.oauth2.GoogleCredentials
-import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseOptions
 import com.retazo.configureRouting
+import config.Env
+import config.initFirebase
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -14,12 +13,11 @@ import routes.*
 import security.TokenService
 import security.configureSeguridad
 import service.PeriodoService
-import java.io.FileInputStream
 
 fun main() {
     embeddedServer(
         Netty,
-        port = 8080,
+        port = Env["PORT"]?.toIntOrNull() ?: 8080,
         host = "0.0.0.0",
     ) {
         module()
@@ -29,15 +27,8 @@ fun main() {
 fun Application.module() {
 
     // 1. Firebase: debe inicializarse antes de crear cualquier repositorio.
-    val serviceAccount = object {}.javaClass
-        .getResourceAsStream("/serviceAccountKey.json")
-        ?: error("No se encontró serviceAccountKey.json en resources")
-
-    val options = FirebaseOptions.builder()
-        .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-        .build()
-
-    FirebaseApp.initializeApp(options)
+    //    Credenciales: clave en resources, variable FIREBASE_CREDENTIALS o emulador (ver config/FirebaseConfig.kt).
+    initFirebase()
 
 
     // 2. Plugins generales
@@ -55,7 +46,7 @@ fun Application.module() {
 
     // 3. Seguridad: antes de las rutas que usan authenticate { }
     val tokens = TokenService(
-        System.getenv("JWT_SECRET") ?: error("Define la variable de entorno JWT_SECRET (mínimo 32 caracteres)."),
+        Env["JWT_SECRET"] ?: error("Define la variable de entorno JWT_SECRET (mínimo 32 caracteres)."),
     )
     configureSeguridad(tokens)
 
@@ -68,4 +59,6 @@ fun Application.module() {
     configurePeriodoRoutes()
     configureUsuarioRoutes(tokens)
     configureFavoritoRoutes()
+    configureArchivoRoutes()  // subida de fotografías (uploads/imagenes)
+    configureRagRoutes()      // asistente histórico: POST /api/places/{id}/ask
 }

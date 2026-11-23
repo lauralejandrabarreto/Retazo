@@ -131,7 +131,7 @@ class LugarRepository {
             mapOf("titulo" to it.titulo, "texto" to it.texto)
         },
         "fuentes" to fuentes.map {
-            mapOf("titulo" to it.titulo, "detalle" to it.detalle, "url" to it.url, "verificada" to it.verificada)
+            mapOf("titulo" to it.titulo, "detalle" to it.detalle, "tipo" to it.tipo.name, "url" to it.url, "verificada" to it.verificada)
         },
         // contenidoVerificado no se guarda: se calcula al leer.
     )

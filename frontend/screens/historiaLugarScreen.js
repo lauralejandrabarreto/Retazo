@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { C, F, SPACING } from '../theme';
 import Divider from '../components/Divider';
 import NoticeBox from '../components/NoticeBox';
 import PlaceImage from '../components/PlaceImage';
+import AskHistoryPanel from '../components/AskHistoryPanel';
 import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import { LoadingState, ErrorState, EmptyState } from '../components/StateMessage';
 import usePlace from '../hooks/usePlace';
@@ -39,12 +40,15 @@ export default function HistoriaLugarScreen({ navigation, route }) {
         </View>
       </View>
 
-      <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
+      <KeyboardAvoidingView style={styles.body} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} keyboardShouldPersistTaps="handled">
         {place.contenidoVerificado ? (
           <NoticeBox icon="check-circle">Información basada en fuentes históricas seleccionadas y verificadas.</NoticeBox>
         ) : (
           <NoticeBox icon="alert-circle" tone="neutral">
-            Contenido preliminar de prueba. Este texto aún no ha sido contrastado con fuentes documentales.
+            {place.fuentes.length > 0
+              ? 'El resumen de esta pantalla es preliminar. El asistente responde con las fuentes consultadas que aparecen al final.'
+              : 'Contenido preliminar de prueba. Este texto aún no ha sido contrastado con fuentes documentales.'}
           </NoticeBox>
         )}
 
@@ -59,18 +63,27 @@ export default function HistoriaLugarScreen({ navigation, route }) {
           </View>
         ))}
 
+        <AskHistoryPanel place={place} />
+
         <Divider label="Fuentes y referencias" />
 
         {place.fuentes.length > 0 ? (
           <View style={{ gap: 8 }}>
             {place.fuentes.map((src) => (
-              <View key={src.titulo} style={styles.sourceRow}>
+              <TouchableOpacity
+                key={src.url ?? src.titulo}
+                style={styles.sourceRow}
+                disabled={!src.url}
+                onPress={() => src.url && Linking.openURL(src.url)}
+                accessibilityRole={src.url ? 'link' : undefined}
+              >
                 <Feather name="book" size={15} color={C.amber} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.sourceLabel}>{src.titulo}</Text>
                   <Text style={styles.sourceDetail}>{src.detalle}</Text>
                 </View>
-              </View>
+                {!!src.url && <Feather name="external-link" size={13} color={C.brown} />}
+              </TouchableOpacity>
             ))}
           </View>
         ) : (
@@ -82,6 +95,7 @@ export default function HistoriaLugarScreen({ navigation, route }) {
           </View>
         )}
       </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }

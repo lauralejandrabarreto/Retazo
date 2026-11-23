@@ -31,7 +31,7 @@ export function filterPlaces(places, { query = '', period = 'todos' } = {}) {
 }
 
 // Lugares cercanos. Hoy usa la ubicación SIMULADA; cuando haya GPS se pasa la real en `coords`.
-export function getNearbyPlaces({
+export async function getNearbyPlaces({
   coords = SIMULATED_LOCATION.coords,
   maxMeters = 3000,
   limit = 3,
@@ -42,7 +42,9 @@ export function getNearbyPlaces({
     maxMeters: String(maxMeters),
     limit: String(limit),
   });
-  return apiGet(`/api/places/nearby?${params.toString()}`);
+  // El backend responde [{ lugar: {...}, distancia }]; las pantallas usan el lugar con su distancia.
+  const items = await apiGet(`/api/places/nearby?${params.toString()}`);
+  return (items ?? []).map((item) => (item.lugar ? { ...item.lugar, distancia: item.distancia } : item));
 }
 
 // --- Administración (requieren sesión de organización; el token lo agrega apiConfig) ---
@@ -57,4 +59,13 @@ export function putPlace(id, place) {
 
 export function deletePlace(id) {
   return apiDelete(`/api/places/${encodeURIComponent(id)}`); // 204 -> null
+}
+// --- Asistente histórico (RAG) ---
+// Devuelve { respuesta, modo, citas: [{ n, titulo, seccion, fuente, url, fragmento }], aviso }.
+// modo: 'generativo' (IA), 'extractivo' (frases de las fuentes) o 'sin_resultados'.
+export const QUESTION_MIN = 3;
+export const QUESTION_MAX = 300;
+
+export function askPlace(placeId, pregunta) {
+  return apiPost(`/api/places/${encodeURIComponent(placeId)}/ask`, { pregunta }, null, { timeout: 45000 });
 }

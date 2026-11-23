@@ -1,7 +1,9 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(ktorLibs.plugins.ktor)
-    kotlin("plugin.serialization") version "1.9.22"
+    // Misma versión que Kotlin (gradle/libs.versions.toml); una versión distinta del
+    // plugin de serialización puede romper la compilación.
+    alias(libs.plugins.kotlin.serialization)
 }
 
 group = "com.example"
@@ -37,4 +39,21 @@ dependencies {
     implementation("at.favre.lib:bcrypt:0.10.2")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+
+    // Cliente HTTP del asistente histórico (RAG) para llamar al modelo de lenguaje (Groq).
+    implementation("io.ktor:ktor-client-core")
+    implementation("io.ktor:ktor-client-cio")
+    testImplementation("io.ktor:ktor-client-mock")
+}
+
+// Script de base de datos: crea/carga las colecciones de Firestore.
+//   gradlew seed               -> crea lo que falte
+//   gradlew seed -Preset=true  -> borra y vuelve a cargar todo
+tasks.register<JavaExec>("seed") {
+    group = "base de datos"
+    description = "Carga los datos iniciales (periodos, lugares y usuarios de prueba) en Firestore."
+    mainClass.set("database.SeedKt")
+    classpath = sourceSets["main"].runtimeClasspath
+    workingDir = projectDir
+    if (project.findProperty("reset") == "true") args("--reset")
 }

@@ -84,3 +84,5 @@ __pycache__/
 *.pem
 *.key
 *.jks
+# Archivos subidos por los usuarios (documentos de organizaciones e imágenes)
+uploads/

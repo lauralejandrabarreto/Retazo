@@ -16,6 +16,7 @@ const val MAX_BYTES_DOCUMENTO = MAX_MB_DOCUMENTO * 1024 * 1024
 //  - Nunca devuelve la contraseña: siempre responde con UsuarioPerfil.
 class UsuarioService(
     private val repository: UsuarioRepository = UsuarioRepository(),
+    private val almacen: AlmacenArchivos = AlmacenArchivos(),
 ) {
 
 
@@ -87,30 +88,26 @@ class UsuarioService(
         val perfil = repository.registrar(limpio)
             ?: throw ConflictoException("Ya existe una cuenta con ese correo.")
 
-        // El archivo se descarta: solo se registran sus metadatos.
+        // El archivo se guarda en el servidor (uploads/documentos) y en Firestore queda su ruta.
+        var guardado: String? = null
         try {
+            guardado = almacen.guardar(almacen.documentos, documento!!.bytes, tipo!!.first, prefijo = perfil.id)
             repository.guardarDocumento(
                 id = perfil.id,
-                tipo = tipo!!.second,
-                nombreOriginal = documento!!.nombreOriginal.take(200),
+                tipo = tipo.second,
+                nombreOriginal = documento.nombreOriginal.take(200),
                 tamanioBytes = documento.bytes.size,
+                ruta = "documentos/$guardado",
             )
         } catch (e: Exception) {
+            guardado?.let { java.io.File(almacen.documentos, it).delete() }
             runCatching { repository.delete(perfil.id) } // rollback para no dejar la cuenta sin estado
             throw e
         }
         return perfil
     }
 
-    private fun tipoDocumento(b: ByteArray): Pair<String, String>? = when {
-        b.size >= 4 && b[0] == 0x25.toByte() && b[1] == 0x50.toByte() &&
-                b[2] == 0x44.toByte() && b[3] == 0x46.toByte() -> "pdf" to "application/pdf"
-        b.size >= 8 && b[0] == 0x89.toByte() && b[1] == 0x50.toByte() &&
-                b[2] == 0x4E.toByte() && b[3] == 0x47.toByte() -> "png" to "image/png"
-        b.size >= 3 && b[0] == 0xFF.toByte() && b[1] == 0xD8.toByte() &&
-                b[2] == 0xFF.toByte() -> "jpg" to "image/jpeg"
-        else -> null
-    }
+    private fun tipoDocumento(b: ByteArray): Pair<String, String>? = AlmacenArchivos.detectarTipo(b)
 
     /**
      * Verifica las credenciales. Siempre lanza el mismo NoAutenticadoException, exista o
@@ -146,7 +143,10 @@ class UsuarioService(
 
     /** Elimina la cuenta y sus favoritos. */
     suspend fun eliminar(id: String) {
+        val ruta = repository.rutaDocumento(id) // se lee antes de borrar la cuenta
         if (!repository.delete(id)) throw NoEncontradoException("El usuario no existe.")
+        // Si era una organización, también se borra su documento del servidor.
+        ruta?.let { java.io.File(almacen.base, it).delete() }
     }
 
     // -------------------------------------------------------------------

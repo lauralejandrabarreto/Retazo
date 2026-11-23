@@ -12,6 +12,8 @@
 //   POST   /api/auth/login                          -> inicio de sesión (401 si son inválidas)
 //   POST   /api/auth/registro                       -> registro de persona (409 si el correo existe)
 //   POST   /api/auth/register-org                   -> registro de organización (multipart)
+//   POST   /api/places/{id}/ask                     -> asistente histórico con RAG
+//   POST   /api/uploads/imagenes                    -> subir foto (organización, multipart)
 
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
@@ -39,8 +41,10 @@ function resolveDevHost() {
   return Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 }
 
-export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '') ?? `http://${resolveDevHost()}:8080`;
+// Se aceptan los dos nombres de variable (EXPO_PUBLIC_API_BASE_URL era el del .env.example anterior).
+const ENV_API_URL = process.env.EXPO_PUBLIC_API_URL ?? process.env.EXPO_PUBLIC_API_BASE_URL;
+
+export const API_BASE_URL = ENV_API_URL?.replace(/\/$/, '') ?? `http://${resolveDevHost()}:8080`;
 
 if (__DEV__) console.log('[API] Servidor:', API_BASE_URL);
 
@@ -145,11 +149,13 @@ export function apiGet(path, token = null) {
   return request(path, { headers: getHeaders(token) });
 }
 
-export function apiPost(path, body, token = null) {
+// options.timeout permite esperar más en peticiones lentas (p. ej. el asistente con IA).
+export function apiPost(path, body, token = null, options = {}) {
   return request(path, {
     method: 'POST',
     headers: getHeaders(token, { 'Content-Type': 'application/json' }),
     body: JSON.stringify(body),
+    ...options,
   });
 }
 

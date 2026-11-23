@@ -11,6 +11,7 @@ import service.ConflictoException
 import service.NoEncontradoException
 import service.ValidacionException
 import service.NoAutenticadoException
+import security.AccesoDenegadoException
 
 @Serializable
 data class RespuestaError(
@@ -41,6 +42,10 @@ fun Application.configureManejoErrores() {
         }
         exception<NoAutenticadoException> { call, e ->
             call.respond(HttpStatusCode.Unauthorized, RespuestaError(e.message ?: "No autenticado."))
+        }
+        // Sesión válida pero el rol no permite la acción (p. ej. un usuario intentando crear un lugar).
+        exception<AccesoDenegadoException> { call, e ->
+            call.respond(HttpStatusCode.Forbidden, RespuestaError(e.message ?: "No tienes permiso para esta acción."))
         }
     }
 }

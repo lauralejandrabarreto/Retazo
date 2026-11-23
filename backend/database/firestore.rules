@@ -1,0 +1,16 @@
+rules_version = '2';
+
+// Reglas de seguridad de Firestore para Retazo.
+//
+// La app NUNCA se conecta directamente a Firestore: todas las lecturas y escrituras
+// pasan por el backend en Ktor, que usa Firebase Admin SDK (con la cuenta de servicio).
+// Admin SDK no está sujeto a estas reglas, así que aquí se BLOQUEA todo acceso directo
+// desde clientes. Esto evita que alguien con la configuración pública del proyecto lea
+// usuarios, contraseñas (hash) o modifique lugares saltándose las validaciones del backend.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

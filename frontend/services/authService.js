@@ -129,7 +129,7 @@ async function readBytes(uri) {
 // completo de expo-document-picker ({ canceled, assets: [...] }).
 //   - Celular: devuelve los bytes (se envían con apiPostMultipart).
 //   - Web: devuelve un Blob (se envía con FormData).
-async function readDocument(documento) {
+export async function readDocument(documento) {
   const asset = documento?.assets?.[0] ?? documento;
 
   if (!asset?.uri) {

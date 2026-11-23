@@ -11,6 +11,8 @@ import LocationPickerMap from '../components/LocationPickerMap';
 import { F, SPACING } from '../theme';
 import FocusAwareStatusBar from '../components/FocusAwareStatusBar';
 import { createPlace } from '../services/placesService';
+import { pickImage, uploadImage } from '../services/uploadService';
+import { SIMULATED_LOCATION } from '../data/constants';
 
 const COLORS = {
   parchment: '#F4EDDF',
@@ -23,9 +25,11 @@ const COLORS = {
   error: '#A33B2E',
 };
 
+// Región inicial del mapa cuando no se obtiene la ubicación del dispositivo. Es la misma
+// ubicación de respaldo del resto de la app; la pantalla avisa que no es la real.
 const INITIAL_REGION = {
-  latitude: 14.0723,
-  longitude: -87.1921,
+  latitude: SIMULATED_LOCATION.coords.lat,
+  longitude: SIMULATED_LOCATION.coords.lng,
   latitudeDelta: 0.01,
   longitudeDelta: 0.01,
 };
@@ -153,6 +157,36 @@ function VistaPrevia({ url, style }) {
   return <Image source={{ uri: url.trim() }} style={style} resizeMode="cover" onError={() => setFallo(true)} />;
 }
 
+// Botón para subir una foto desde el dispositivo al servidor. Al terminar entrega la URL.
+function BotonSubirFoto({ onUploaded }) {
+  const [subiendo, setSubiendo] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function subir() {
+    setError(null);
+    try {
+      const asset = await pickImage();
+      if (!asset) return;
+      setSubiendo(true);
+      onUploaded(await uploadImage(asset));
+    } catch (e) {
+      setError(e?.message || 'No se pudo subir la imagen.');
+    } finally {
+      setSubiendo(false);
+    }
+  }
+
+  return (
+    <View>
+      <TouchableOpacity style={styles.uploadImageButton} onPress={subir} disabled={subiendo} accessibilityRole="button">
+        {subiendo ? <ActivityIndicator size="small" color={COLORS.gold} /> : <Feather name="upload" size={14} color={COLORS.gold} />}
+        <Text style={styles.uploadImageText}>{subiendo ? 'Subiendo…' : 'Subir desde el dispositivo'}</Text>
+      </TouchableOpacity>
+      {!!error && <Text style={styles.uploadImageError}>{error}</Text>}
+    </View>
+  );
+}
+
 function TarjetaFotografia({ foto, puedeEliminar, onChangeUrl, onChangeYear, onRemove }) {
   return (
     <View style={styles.photoCard}>
@@ -171,6 +205,7 @@ function TarjetaFotografia({ foto, puedeEliminar, onChangeUrl, onChangeYear, onR
             style={styles.input}
             accessibilityLabel="URL de la fotografía histórica"
           />
+          <BotonSubirFoto onUploaded={onChangeUrl} />
         </View>
         {puedeEliminar && (
           <TouchableOpacity onPress={onRemove} hitSlop={10} accessibilityRole="button" accessibilityLabel="Quitar fotografía">
@@ -220,6 +255,8 @@ export default function AgregarLugarScreen() {
   const [region, setRegion] = useState(null);
   const [coordenadas, setCoordenadas] = useState(null);
   const [cargandoUbicacion, setCargandoUbicacion] = useState(true);
+  // Aviso visible cuando no se obtiene la ubicación (Alert.alert no se muestra en la web).
+  const [avisoUbicacion, setAvisoUbicacion] = useState(null);
 
   const [enviando, setEnviando] = useState(false);
 
@@ -230,12 +267,10 @@ export default function AgregarLugarScreen() {
   async function obtenerUbicacion() {
     try {
       setCargandoUbicacion(true);
+      setAvisoUbicacion(null);
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Permiso de ubicación',
-          'Necesitamos acceso a tu ubicación para centrar el mapa. También puedes seleccionar una ubicación manualmente.'
-        );
+        setAvisoUbicacion('No diste permiso de ubicación. Toca el mapa para marcar dónde está el lugar.');
         return;
       }
       const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
@@ -243,8 +278,8 @@ export default function AgregarLugarScreen() {
       setCoordenadas(nueva);
       setRegion({ ...nueva, latitudeDelta: 0.01, longitudeDelta: 0.01 });
     } catch (error) {
-      console.error('Error obteniendo ubicación:', error);
-      Alert.alert('Ubicación no disponible', 'No pudimos obtener tu ubicación. Selecciónala en el mapa.');
+      console.warn('Error obteniendo ubicación:', error);
+      setAvisoUbicacion('No pudimos obtener tu ubicación. Toca el mapa para marcar dónde está el lugar.');
     } finally {
       setCargandoUbicacion(false);
     }
@@ -388,8 +423,16 @@ export default function AgregarLugarScreen() {
               </View>
 
               {!cargandoUbicacion && !region && (
+                <View style={styles.locationNotice}>
+                  <Feather name="map-pin" size={14} color={COLORS.error} />
+                  <Text style={styles.locationNoticeText}>
+                    {avisoUbicacion ?? 'No se pudo obtener tu ubicación.'} El mapa muestra una ubicación de ejemplo, no la tuya.
+                  </Text>
+                </View>
+              )}
+              {!cargandoUbicacion && !region && (
                 <TouchableOpacity onPress={obtenerUbicacion} accessibilityRole="button">
-                  <Text style={styles.retryText}>No se pudo obtener tu ubicación. Usar mi ubicación</Text>
+                  <Text style={styles.retryText}>Intentar de nuevo con mi ubicación</Text>
                 </TouchableOpacity>
               )}
 
@@ -436,8 +479,9 @@ export default function AgregarLugarScreen() {
             </TouchableOpacity>
           </Seccion>
 
-          <Seccion titulo="FOTOGRAFÍA ACTUAL" descripcion="Pega el enlace de una fotografía del estado actual del lugar.">
+          <Seccion titulo="FOTOGRAFÍA ACTUAL" descripcion="Pega el enlace de una fotografía del estado actual del lugar o súbela desde tu dispositivo.">
             <Campo label="URL de la fotografía actual" value={urlActual} onChangeText={setUrlActual} placeholder="https://..." url />
+            <BotonSubirFoto onUploaded={setUrlActual} />
             <VistaPrevia url={urlActual} style={styles.currentPhoto} />
           </Seccion>
 
@@ -661,6 +705,18 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
 
+  uploadImageButton: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
+    marginTop: 8, paddingVertical: 6, paddingHorizontal: 10,
+    borderWidth: 1, borderColor: COLORS.border, borderRadius: 8, backgroundColor: COLORS.paper,
+  },
+  uploadImageText: { fontSize: 12, color: COLORS.gold, fontFamily: F.sansMed },
+  uploadImageError: { fontSize: 11, color: COLORS.error, marginTop: 4, fontFamily: F.sans },
+  locationNotice: {
+    flexDirection: 'row', gap: 8, alignItems: 'flex-start', marginTop: 8, padding: 10,
+    borderRadius: 8, backgroundColor: '#F8E9E5', borderWidth: 1, borderColor: '#EBC9C1',
+  },
+  locationNoticeText: { flex: 1, fontSize: 12, color: COLORS.error, lineHeight: 17, fontFamily: F.sans },
   removePhoto: {
     color: '#A66B50',
     fontSize: 23,

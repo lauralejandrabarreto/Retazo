@@ -107,14 +107,20 @@ class UsuarioRepository {
         true
     }
 
-    /** Guarda solo los metadatos del documento (el archivo no se almacena) y deja la cuenta pendiente. */
-    suspend fun guardarDocumento(id: String, tipo: String, nombreOriginal: String, tamanioBytes: Int) =
+    /** Ruta del documento de una organización dentro de uploads/, o null si no tiene. */
+    suspend fun rutaDocumento(id: String): String? = withContext(Dispatchers.IO) {
+        collection.document(id.comoId()).get().get().getString("documentoRuta")
+    }
+
+    /** Guarda los metadatos y la ruta del documento (el archivo está en uploads/) y deja la cuenta pendiente. */
+    suspend fun guardarDocumento(id: String, tipo: String, nombreOriginal: String, tamanioBytes: Int, ruta: String) =
         withContext(Dispatchers.IO) {
             collection.document(id).update(
                 mapOf(
                     "documentoTipo" to tipo,
                     "documentoNombre" to nombreOriginal,
                     "documentoTamanio" to tamanioBytes,
+                    "documentoRuta" to ruta,
                     "estadoVerificacion" to "pendiente",
                 ),
             ).get()
