@@ -11,8 +11,8 @@
       "lat": 4.5981,
       "lng": -74.076
     },
-    "imagen": "https://images.unsplash.com/photo-1639910310293-4b03ccac91cc?w=300&h=300&fit=crop&auto=format",
-    "imagenActual": "https://commons.wikimedia.org/wiki/Special:FilePath/Plaza_de_Bol%C3%ADvar_desde_el_Museo_de_la_Independencia.JPG?width=1280",
+    "imagen": "/imagenes/plaza-bolivar-imagen.jpg",
+    "imagenActual": "/imagenes/plaza-bolivar-imagenactual.jpg",
     "descripcion": "Plaza principal del centro histórico de Bogotá. A su alrededor se encuentran edificaciones como el Capitolio Nacional, la Catedral Primada y el Palacio Liévano.",
     "fotosHistoricas": [
       {
@@ -21,7 +21,7 @@
       },
       {
         "anio": "1950",
-        "uri": "https://i.pinimg.com/736x/fc/38/74/fc38747650a917ec1d4553a9bdd7818c.jpg"
+        "uri": "/imagenes/plaza-bolivar-historica-1950.jpg"
       }
     ],
     "historia": [
@@ -67,13 +67,13 @@
       "lat": 4.6018,
       "lng": -74.0721
     },
-    "imagen": "https://commons.wikimedia.org/wiki/Special:FilePath/BOG_Museo_del_Oro.JPG?width=1280",
-    "imagenActual": "https://commons.wikimedia.org/wiki/Special:FilePath/BOG_Museo_del_Oro.JPG?width=1280",
+    "imagen": "/imagenes/museo-oro-imagen.jpg",
+    "imagenActual": "/imagenes/museo-oro-imagenactual.jpg",
     "descripcion": "Museo del Banco de la República dedicado a la orfebrería y a las culturas prehispánicas del territorio colombiano.",
     "fotosHistoricas": [
       {
         "anio": "1950",
-        "uri": "https://images.adsttc.com/media/images/51f6/a4bf/e8e4/4ef7/d400/002a/newsletter/1_(17)_-_copia.jpg?1375118520"
+        "uri": "/imagenes/museo-oro-historica-1950.jpg"
       }
     ],
     "historia": [
@@ -113,16 +113,16 @@
       "lng": -74.0743
     },
     "imagen": "https://bogota.gov.co/sites/default/files/2019-03/archivo_instituto_distrital_de_turismo_12.jpg",
-    "imagenActual": "https://commons.wikimedia.org/wiki/Special:FilePath/Teatro_Cristobal_Col%C3%B3n.JPG?width=1280",
+    "imagenActual": "/imagenes/teatro-colon-imagenactual.jpg",
     "descripcion": "Teatro de ópera y artes escénicas ubicado en el centro histórico, inaugurado a finales del siglo XIX.",
     "fotosHistoricas": [
       {
         "anio": "~ 1890",
-        "uri": "https://www.elnuevosiglo.com.co/sites/default/files/2020-10/23ad%20foto2-oct04.jpg"
+        "uri": "/imagenes/teatro-colon-historica-1890.jpg"
       },
       {
         "anio": "~ 1940",
-        "uri": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwAzqAEYb4_BIA5XnHEU6wD56hmKa4zwjJ2bPQ_QpP3n74EXfNaj4QE4CD&s=10"
+        "uri": "/imagenes/teatro-colon-historica-1940.jpg"
       }
     ],
     "historia": [
@@ -168,13 +168,13 @@
       "lat": 4.6155,
       "lng": -74.0687
     },
-    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSR4vbld9ZoGJp5PB1cLG1_ZKeAecgLQkJsen5rY7n7gQ&s=10",
-    "imagenActual": "https://www.infobae.com/new-resizer/w-jFlaGBM4Iu6p7FYrYHoKaG5Mo=/arc-anglerfish-arc2-prod-infobae/public/C5WZSIPOWZEF3LUHC5ENHU22PI.jpeg",
+    "imagen": "/imagenes/museo-nacional-imagen.jpg",
+    "imagenActual": "/imagenes/museo-nacional-imagenactual.jpg",
     "descripcion": "Museo fundado en el siglo XIX. Desde mediados del siglo XX funciona en el edificio que antes fue la penitenciaría conocida como el Panóptico.",
     "fotosHistoricas": [
       {
         "anio": "~ 1850",
-        "uri": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSwzdVHfnNscK4dTulA9FluY52Y--CNtbNGQ7hlDcpAug9nfp8fS9NxB8zV&s=10"
+        "uri": "/imagenes/museo-nacional-historica-1850.jpg"
       },
       {
         "anio": "~ 1920",
@@ -217,8 +217,8 @@
       "lat": 4.6037,
       "lng": -74.0866
     },
-    "imagen": "https://images.unsplash.com/photo-1697919046731-6474a584cc20?w=300&h=300&fit=crop&auto=format",
-    "imagenActual": "https://images.unsplash.com/photo-1697919046731-6474a584cc20?w=900&h=700&fit=crop&auto=format",
+    "imagen": "/imagenes/estacion-sabana-imagen.jpg",
+    "imagenActual": "/imagenes/estacion-sabana-imagenactual.jpg",
     "descripcion": "Antigua estación central del ferrocarril en Bogotá, cuyo edificio principal data de comienzos del siglo XX.",
     "fotosHistoricas": [
       {
@@ -269,13 +269,13 @@
       "lat": 14.105,
       "lng": -87.2045
     },
-    "imagen": "https://diarioroatan.com/wp-content/uploads/2023/12/plaza-central.jpg",
-    "imagenActual": "https://diarioroatan.com/wp-content/uploads/2023/12/plaza-central.jpg",
+    "imagen": "/imagenes/parque-central-imagen.jpg",
+    "imagenActual": "/imagenes/parque-central-imagenactual.jpg",
     "descripcion": "Plaza central del casco histórico de Tegucigalpa, frente a la Catedral de San Miguel Arcángel.",
     "fotosHistoricas": [
       {
         "anio": "1904",
-        "uri": "https://commons.wikimedia.org/wiki/Special:FilePath/Parque_Central_de_Tegucigalpa_1904.JPG?width=1280"
+        "uri": "/imagenes/parque-central-historica-1904.jpg"
       },
       {
         "anio": "1950",
@@ -325,17 +325,17 @@
       "lat": 14.1052,
       "lng": -87.2041
     },
-    "imagen": "https://commons.wikimedia.org/wiki/Special:FilePath/Inside_St._Michael_Archangel_Cathedral_Tegucigalpa.jpg?width=600",
-    "imagenActual": "https://commons.wikimedia.org/wiki/Special:FilePath/Catedral_Metropolitana_de_San_Miguel_Arc%C3%A1ngel_de_Tegucigalpa.jpg?width=1280",
+    "imagen": "/imagenes/catedral-san-miguel-imagen.jpg",
+    "imagenActual": "/imagenes/catedral-san-miguel-imagenactual.jpg",
     "descripcion": "Catedral de estilo barroco colonial construida durante el siglo XVIII en el centro de Tegucigalpa.",
     "fotosHistoricas": [
       {
         "anio": "1904",
-        "uri": "https://commons.wikimedia.org/wiki/Special:FilePath/Parque_Central_de_Tegucigalpa_1904.JPG?width=1280"
+        "uri": "/imagenes/catedral-san-miguel-historica-1904.jpg"
       },
       {
         "anio": "1970",
-        "uri": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5Z_muny3bk-u8xcOJ_c-ZNbovmkMVR_8OAQ_okC-tt2ost_vyT4UOnCm1&s=10"
+        "uri": "/imagenes/catedral-san-miguel-historica-1970.jpg"
       }
     ],
     "historia": [
@@ -374,8 +374,8 @@
       "lat": 14.087,
       "lng": -87.164
     },
-    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCSp3SVbpwDPGtYcxw0HpogrNIc9gbCAbTJbNkpXLnjZVJPv_u52-qrRo&s=10",
-    "imagenActual": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/12/47/38/50/basilica-de-suyapa.jpg?w=1200&h=-1&s=1",
+    "imagen": "/imagenes/basilica-suyapa-imagen.jpg",
+    "imagenActual": "/imagenes/basilica-suyapa-imagenactual.jpg",
     "descripcion": "Santuario dedicado a la Virgen de Suyapa. Su construcción comenzó a mediados del siglo XX y es un importante centro de peregrinación.",
     "fotosHistoricas": [
       {
@@ -426,17 +426,17 @@
       "lat": 14.4597,
       "lng": -87.639
     },
-    "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTdcDwkaLGQozYLgwNMSRBx54ykYVD4mFtToethkBCZBTfDO3KL437DLiM&s=10",
-    "imagenActual": "https://images.trvl-media.com/place/553248621532964659/01ed5c0d-2344-4b9d-827b-81c950306c1f.jpg",
+    "imagen": "/imagenes/catedral-comayagua-imagen.jpg",
+    "imagenActual": "/imagenes/catedral-comayagua-imagenactual.jpg",
     "descripcion": "Catedral colonial de la antigua capital de Honduras, conocida por el reloj antiguo de su torre.",
     "fotosHistoricas": [
       {
         "anio": "~ 1881",
-        "uri": "https://commons.wikimedia.org/wiki/Special:FilePath/Catedral_de_Comayagua_1881.png?width=1280"
+        "uri": "/imagenes/catedral-comayagua-historica-1881.png"
       },
       {
         "anio": "~ 1950",
-        "uri": "https://commons.wikimedia.org/wiki/Special:FilePath/Catedral_de_Comayagua_siglo_XX.jpg?width=1280"
+        "uri": "/imagenes/catedral-comayagua-historica-1950.jpg"
       }
     ],
     "historia": [
@@ -475,13 +475,13 @@
       "lat": 15.7745,
       "lng": -88.0373
     },
-    "imagen": "https://images.unsplash.com/photo-1721056609609-3bcbc27e08ee?w=300&h=300&fit=crop&auto=format",
-    "imagenActual": "https://images.unsplash.com/photo-1721056609609-3bcbc27e08ee?w=900&h=700&fit=crop&auto=format",
+    "imagen": "/imagenes/fortaleza-san-fernando-imagen.jpg",
+    "imagenActual": "/imagenes/fortaleza-san-fernando-imagenactual.jpg",
     "descripcion": "Fortificación colonial construida en el siglo XVIII en la costa caribeña de Honduras para defender el puerto de Omoa.",
     "fotosHistoricas": [
       {
         "anio": "~ 1900",
-        "uri": "https://maravillashonduras.wordpress.com/wp-content/uploads/2013/06/7c009-fort_omoa_photo.jpg?w=548&h=214"
+        "uri": "/imagenes/fortaleza-san-fernando-historica-1900.jpg"
       }
     ],
     "historia": [
