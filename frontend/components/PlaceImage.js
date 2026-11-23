@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { C, F } from '../theme';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 // Imagen con estado de respaldo:
 // - sin URL (la foto aún no existe en los datos) -> muestra `label`
 // - la imagen no carga (sin conexión, enlace roto) -> muestra `failedLabel`
 // Los elementos superpuestos (`children`) solo se dibujan si la imagen cargó.
 export default function PlaceImage({
-  uri,
+  uri: rawUri,
   style,
   label = 'Imagen no disponible',
   failedLabel = 'No se pudo cargar la imagen',
@@ -16,6 +17,7 @@ export default function PlaceImage({
   children,
 }) {
   const [failed, setFailed] = useState(false);
+  const uri = resolveImageUrl(rawUri);
 
   useEffect(() => setFailed(false), [uri]);
 

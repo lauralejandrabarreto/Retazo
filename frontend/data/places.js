@@ -73,7 +73,7 @@ export const PLACES = [
     epoca: 'Siglo XVI',
     coords: { lat: 4.5981, lng: -74.0760 },
     imagen: unsplash(IMG.plazaBolivar, 300, 300),
-    imagenActual: 'https://upload.wikimedia.org/wikipedia/commons/5/5b/Plaza_de_Bol%C3%ADvar_desde_el_Museo_de_la_Independencia.JPG?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original',
+    imagenActual: 'https://commons.wikimedia.org/wiki/Special:FilePath/Plaza_de_Bol%C3%ADvar_desde_el_Museo_de_la_Independencia.JPG?width=1280',
     fotosHistoricas: [
       { anio: '1846', uri: 'https://www.utadeo.edu.co/sites/tadeo/files/node/wysiwyg/plaza_mayordebogota.1846.edward.wallhouse_mark_-coleccion.banco_.de_.la_.republica.jpg' },
       { anio: '1950', uri: 'https://i.pinimg.com/736x/fc/38/74/fc38747650a917ec1d4553a9bdd7818c.jpg' },
@@ -110,8 +110,8 @@ export const PLACES = [
     siglo: 'XX',
     epoca: 'Siglo XX',
     coords: { lat: 4.6018, lng: -74.0721 },
-    imagen: 'https://upload.wikimedia.org/wikipedia/commons/d/dc/BOG_Museo_del_Oro.JPG?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=original',
-    imagenActual: 'https://upload.wikimedia.org/wikipedia/commons/d/dc/BOG_Museo_del_Oro.JPG?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=original',
+    imagen: 'https://commons.wikimedia.org/wiki/Special:FilePath/BOG_Museo_del_Oro.JPG?width=1280',
+    imagenActual: 'https://commons.wikimedia.org/wiki/Special:FilePath/BOG_Museo_del_Oro.JPG?width=1280',
     fotosHistoricas: [
       { anio: '1950', uri: 'https://images.adsttc.com/media/images/51f6/a4bf/e8e4/4ef7/d400/002a/newsletter/1_(17)_-_copia.jpg?1375118520' },
     ],
@@ -131,7 +131,7 @@ export const PLACES = [
     epoca: 'Siglo XIX',
     coords: { lat: 4.5966, lng: -74.0743 },
     imagen: 'https://bogota.gov.co/sites/default/files/2019-03/archivo_instituto_distrital_de_turismo_12.jpg',
-    imagenActual: 'https://upload.wikimedia.org/wikipedia/commons/0/0b/Teatro_Cristobal_Col%C3%B3n.JPG?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=original',
+    imagenActual: 'https://commons.wikimedia.org/wiki/Special:FilePath/Teatro_Cristobal_Col%C3%B3n.JPG?width=1280',
     fotosHistoricas: [
       { anio: '~ 1890', uri: 'https://www.elnuevosiglo.com.co/sites/default/files/2020-10/23ad%20foto2-oct04.jpg' },
       { anio: '~ 1940', uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwAzqAEYb4_BIA5XnHEU6wD56hmKa4zwjJ2bPQ_QpP3n74EXfNaj4QE4CD&s=10' }
@@ -175,7 +175,7 @@ export const PLACES = [
     imagen: unsplash(IMG.sabana, 300, 300),
     imagenActual: unsplash(IMG.sabana, 900, 700),
     fotosHistoricas: [
-      { anio: '1960', uri: 'https://scontent.ftgu3-4.fna.fbcdn.net/v/t39.30808-6/494683416_735917832192728_7462988334583427310_n.jpg?stp=dst-jpg_tt6&cstp=mx720x936&ctp=p526x296&_nc_cat=107&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=sFMFjXGlx7gQ7kNvwF1rqz5&_nc_oc=Adq0YSCVVX3P2gS9V_TbqrOLJoe1MpkSPom7RmThuu-oKJ8tMTMCAi9Zfpq6bBhv5X8&_nc_zt=23&_nc_ht=scontent.ftgu3-4.fna&_nc_gid=tKHJK9v2vhF2zpIFFlLO1w&_nc_ss=7b289&oh=00_AQPX2yoUlpMz4v3Btx9W-F7v1UVG6BBkA5239-dKjKIAkg&oe=6AE4B603' },
+      { anio: '1960', uri: null },
     ],
     descripcion:
       'Antigua estación central del ferrocarril en Bogotá, cuyo edificio principal data de comienzos del siglo XX.',
@@ -195,8 +195,8 @@ export const PLACES = [
     imagen: 'https://diarioroatan.com/wp-content/uploads/2023/12/plaza-central.jpg',
     imagenActual: 'https://diarioroatan.com/wp-content/uploads/2023/12/plaza-central.jpg',
     fotosHistoricas: [
-      { anio: '1883', uri: 'https://scontent.ftgu3-3.fna.fbcdn.net/v/t39.30808-6/527787669_24206570408999362_1794793955454114525_n.jpg?stp=dst-jpg_tt6&cstp=mx1125x798&ctp=s720x720&_nc_cat=103&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=LkTxBu4ixoIQ7kNvwESoO-E&_nc_oc=Adp9LUvDnumx0diab_Sp7VxhUOk-0PUWmaVRVQKAHbjsiyVgBjdtV4vQ8_uITUZWnAE&_nc_zt=23&_nc_ht=scontent.ftgu3-3.fna&_nc_gid=klSJc5dVfBq25E6Vujy0ZQ&_nc_ss=7b289&oh=00_AQMKoJKa6TC_bURXrSo_5_kXNi2ZOBcE1GNoWCNrGaNnWQ&oe=6AE4DD3A' },
-      { anio: '1950', uri: 'https://scontent.ftgu3-4.fna.fbcdn.net/v/t39.30808-6/565786717_10172286005785517_1155195831033608567_n.jpg?stp=dst-jpg_tt6&cstp=mx794x534&ctp=s794x534&_nc_cat=101&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=127cfc&_nc_ohc=7tifzZ3upGwQ7kNvwElQjA5&_nc_oc=AdoDiKma-neYzM2axZQUE9ezZ8PAYF84NBIdlLOe7U50R8QX1-QwLuF-NpsLogrtVEQ&_nc_zt=23&_nc_ht=scontent.ftgu3-4.fna&_nc_gid=Ap9e4J2zsTTgFH1IjkW-oA&_nc_ss=7b289&oh=00_AQMTC9iDGNQUhpXzO_V2ZqQmT-i01BiJgjKfH_Gq71VlKQ&oe=6AE4D321' },
+      { anio: '1904', uri: 'https://commons.wikimedia.org/wiki/Special:FilePath/Parque_Central_de_Tegucigalpa_1904.JPG?width=1280' },
+      { anio: '1950', uri: null },
     ],
     descripcion:
       'Plaza central del casco histórico de Tegucigalpa, frente a la Catedral de San Miguel Arcángel.',
@@ -213,10 +213,10 @@ export const PLACES = [
     siglo: 'XVIII',
     epoca: 'Siglo XVIII',
     coords: { lat: 14.1052, lng: -87.2041 },
-    imagen: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1a/Inside_St._Michael_Archangel_Cathedral_Tegucigalpa.jpg/330px-Inside_St._Michael_Archangel_Cathedral_Tegucigalpa.jpg?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail',
-    imagenActual: 'https://upload.wikimedia.org/wikipedia/commons/9/9f/Catedral_Metropolitana_de_San_Miguel_Arc%C3%A1ngel_de_Tegucigalpa.jpg?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=original',
+    imagen: 'https://commons.wikimedia.org/wiki/Special:FilePath/Inside_St._Michael_Archangel_Cathedral_Tegucigalpa.jpg?width=600',
+    imagenActual: 'https://commons.wikimedia.org/wiki/Special:FilePath/Catedral_Metropolitana_de_San_Miguel_Arc%C3%A1ngel_de_Tegucigalpa.jpg?width=1280',
     fotosHistoricas: [
-      { anio: '1889', uri: 'https://scontent.ftgu3-4.fna.fbcdn.net/v/t39.30808-6/483102505_662285806294106_8262968863749489950_n.jpg?stp=dst-jpg_tt6&cstp=mx1485x1194&ctp=s640x640&_nc_cat=109&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=p9ba-RgbjKsQ7kNvwHEPKq1&_nc_oc=Adpdiu3JwOd8HUCjy30aUxClLNtbGlUcoHAryn2vuNTd8LFmsJ39Fd2MPQVRDEeXN_0&_nc_zt=23&_nc_ht=scontent.ftgu3-4.fna&_nc_gid=H3IBL4376EoUC0cPQneglQ&_nc_ss=7b289&oh=00_AQNqdN9vHbnsvRpFwTwV_sYIrwfzcW0xpbYCePJRHmtVEQ&oe=6AE4D59C' },
+      { anio: '1904', uri: 'https://commons.wikimedia.org/wiki/Special:FilePath/Parque_Central_de_Tegucigalpa_1904.JPG?width=1280' },
       { anio: '1970', uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5Z_muny3bk-u8xcOJ_c-ZNbovmkMVR_8OAQ_okC-tt2ost_vyT4UOnCm1&s=10' },
     ],
     descripcion:
@@ -237,7 +237,7 @@ export const PLACES = [
     imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCSp3SVbpwDPGtYcxw0HpogrNIc9gbCAbTJbNkpXLnjZVJPv_u52-qrRo&s=10',
     imagenActual: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/12/47/38/50/basilica-de-suyapa.jpg?w=1200&h=-1&s=1',
     fotosHistoricas: [
-      { anio: '1973', uri: 'https://scontent.ftgu3-3.fna.fbcdn.net/v/t39.99422-6/753418320_2229800371119541_345133690155013292_n.png?stp=dst-jpg_tt6&cstp=mx747x552&ctp=s747x552&_nc_cat=105&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=127cfc&_nc_ohc=aXH0_AGxvI8Q7kNvwFKWjJo&_nc_oc=AdryjDPVEQf4-5qGd2uBzBV8q4Nf2p7oqIRsiwWnokEr4K19zpIMNLuYWHZQcR8j0vI&_nc_zt=14&_nc_ht=scontent.ftgu3-3.fna&_nc_gid=_fzsQCq9jrDCcw1TcmPrDQ&_nc_ss=7b289&oh=00_AQMdem4wpaYzYVBWZLx4nweeZGUP5g18kvsZjxviQcTEkA&oe=6AE4AFED' },
+      { anio: '1973', uri: null },
     ],
     descripcion:
       'Santuario dedicado a la Virgen de Suyapa. Su construcción comenzó a mediados del siglo XX y es un importante centro de peregrinación.',
@@ -273,8 +273,8 @@ export const PLACES = [
     imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTdcDwkaLGQozYLgwNMSRBx54ykYVD4mFtToethkBCZBTfDO3KL437DLiM&s=10',
     imagenActual: 'https://images.trvl-media.com/place/553248621532964659/01ed5c0d-2344-4b9d-827b-81c950306c1f.jpg',
     fotosHistoricas: [
-      { anio: '~ 1881', uri: 'https://upload.wikimedia.org/wikipedia/commons/a/a1/Catedral_de_Comayagua_1881.png?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=original' },
-      { anio: '~ 1950', uri: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Catedral_de_Comayagua_siglo_XX.jpg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original' },
+      { anio: '~ 1881', uri: 'https://commons.wikimedia.org/wiki/Special:FilePath/Catedral_de_Comayagua_1881.png?width=1280' },
+      { anio: '~ 1950', uri: 'https://commons.wikimedia.org/wiki/Special:FilePath/Catedral_de_Comayagua_siglo_XX.jpg?width=1280' },
     ],
     descripcion:
       'Catedral colonial de la antigua capital de Honduras, conocida por el reloj antiguo de su torre.',

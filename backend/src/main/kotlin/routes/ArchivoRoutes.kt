@@ -38,6 +38,8 @@ fun Application.configureArchivoRoutes(almacen: AlmacenArchivos = AlmacenArchivo
 
     routing {
         staticFiles("/uploads/imagenes", almacen.imagenes)
+        // Fotos de los lugares de prueba, incluidas en el proyecto (gradlew descargarImagenes).
+        staticFiles("/imagenes", java.io.File(config.Env["SEED_IMAGES_DIR"] ?: "database/seed/imagenes"))
 
         authenticate(AUTH_JWT) {
             post("/api/uploads/imagenes") {

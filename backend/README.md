@@ -32,6 +32,7 @@ Las variables también se pueden definir como variables de entorno del sistema, 
 
 ```powershell
 cd backend
+.\gradlew.bat descargarImagenes   # solo si cambian las fotos: las baja a database/seed/imagenes
 .\gradlew.bat seed     # solo la primera vez: crea y carga la base de datos
 .\gradlew.bat run      # inicia el servidor en http://0.0.0.0:8080
 ```
@@ -54,6 +55,7 @@ Queda listo cuando aparece `Responding at http://0.0.0.0:8080`. Para comprobarlo
 | GET / POST / DELETE | `/api/favoritos[/{lugarId}]` | token | Favoritos del usuario |
 | POST | `/api/uploads/imagenes` | organización | Subir foto (multipart `imagen`, JPG/PNG ≤ 5 MB) → `{ url }` |
 | GET | `/uploads/imagenes/{archivo}` | público | Ver una foto subida |
+| GET | `/imagenes/{archivo}` | público | Fotos de los lugares de prueba (`database/seed/imagenes`) |
 | POST | `/api/places/{id}/ask` | público | Asistente histórico (RAG) `{ "pregunta": "..." }` |
 | GET | `/api/rag/estado` | público | Documentos del RAG y si la IA está configurada |
 

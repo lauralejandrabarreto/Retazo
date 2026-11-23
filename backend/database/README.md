@@ -11,6 +11,7 @@ Por eso, los "scripts de creación y configuración" de esta base son:
 | `../src/main/kotlin/database/Seed.kt` + `seed/lugares.json` (se ejecuta con `gradlew seed`) | Crea las colecciones y carga los datos iniciales. | `CREATE TABLE` + `INSERT` (seed) |
 | `firebase.json` y `.firebaserc` | Proyecto de Firebase, despliegue de reglas e índices, y configuración del emulador local. | Configuración del servidor |
 | `generarLugares.mjs` | Regenera `seed/lugares.json` a partir de `frontend/data/places.js` y de las fuentes del RAG. | — |
+| `gradlew descargarImagenes` | Descarga las fotos de los lugares a `seed/imagenes/` y cambia sus URL por `/imagenes/...`, que sirve el backend. | — |
 
 ## Modelo de datos
 
@@ -58,7 +59,13 @@ En una base relacional estas relaciones serían llaves foráneas. Aquí las mant
 
 Firestore crea automáticamente un índice por cada campo. Las consultas del backend usan un solo campo cada una (`siglo` en lugares, `orden` en periodos y `createdAt` en favoritos), así que **no se necesitan índices compuestos**. `firestore.indexes.json` excluye de la indexación los textos largos (`descripcion` e `historia`): nunca se filtra por ellos y así se ahorra espacio.
 
-### Archivos (documentos e imágenes)
+### Fotos de los lugares de prueba
+
+Las fotos de los 10 lugares se guardan **dentro del proyecto**, en `seed/imagenes/`, y el backend las sirve en `http://<servidor>:8080/imagenes/<archivo>`. En Firestore quedan como rutas relativas (`/imagenes/plaza-bolivar-imagen.jpg`) y la app les antepone la dirección del servidor. Así no dependen de que otros sitios mantengan sus enlaces: los de Facebook, por ejemplo, **vencen a los pocos días**. `seed/imagenes/CREDITOS.md` dice de dónde salió cada foto.
+
+Para actualizarlas: cambia las URL en `frontend/data/places.js`, ejecuta `node backend/database/generarLugares.mjs`, luego `gradlew descargarImagenes` y luego `gradlew seed`. Las fotos históricas que tienen `uri: null` aparecen en la app como "pendiente".
+
+### Archivos subidos por los usuarios (documentos e imágenes)
 
 Firebase Storage exige el plan de pago **Blaze** desde febrero de 2026. Por eso los archivos se guardan **en el servidor Ktor**:
 

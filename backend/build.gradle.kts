@@ -57,3 +57,13 @@ tasks.register<JavaExec>("seed") {
     workingDir = projectDir
     if (project.findProperty("reset") == "true") args("--reset")
 }
+
+// Descarga las fotos de los lugares a database/seed/imagenes y actualiza lugares.json.
+//   gradlew descargarImagenes   (después: gradlew seed)
+tasks.register<JavaExec>("descargarImagenes") {
+    group = "base de datos"
+    description = "Descarga las fotografías de los lugares dentro del proyecto."
+    mainClass.set("database.DescargarImagenesKt")
+    classpath = sourceSets["main"].runtimeClasspath
+    workingDir = projectDir
+}
